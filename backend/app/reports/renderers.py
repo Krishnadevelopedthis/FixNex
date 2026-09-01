@@ -27,13 +27,33 @@ _env = Environment(
 )
 
 
-def weasyprint_available() -> tuple[bool, str]:
-    try:
-        import weasyprint  # noqa: F401
+# Probed once and cached: (available, detail, HTML class or None).
+_weasyprint_probe: tuple[bool, str, object | None] | None = None
 
-        return True, "WeasyPrint"
-    except Exception as exc:
-        return False, f"{type(exc).__name__}"
+
+def weasyprint_available() -> tuple[bool, str]:
+    """Report whether WeasyPrint can be used, probing at most once.
+
+    Importing WeasyPrint performs a dlopen of pango/cairo through cffi. On a
+    host where those libraries are absent the import raises, and repeating that
+    failing dlopen on every render is both wasteful and unstable — it has been
+    observed to crash the interpreter after a handful of attempts. The probe is
+    therefore performed once and the result cached for the process lifetime.
+    """
+    global _weasyprint_probe
+    if _weasyprint_probe is None:
+        try:
+            from weasyprint import HTML
+
+            _weasyprint_probe = (True, "WeasyPrint", HTML)
+        except Exception as exc:
+            logger.info(
+                "WeasyPrint is unavailable (%s); PDFs will be rendered with fpdf2.",
+                type(exc).__name__,
+            )
+            _weasyprint_probe = (False, type(exc).__name__, None)
+    available, detail, _ = _weasyprint_probe
+    return available, detail
 
 
 # ---------------------------------------------------------------------- HTML
@@ -46,11 +66,10 @@ def render_pdf(context: dict) -> tuple[bytes, str]:
     """Return (pdf_bytes, engine_name)."""
     html = render_html(context).decode("utf-8")
     available, _ = weasyprint_available()
-    if available:
+    if available and _weasyprint_probe is not None:
+        html_class = _weasyprint_probe[2]
         try:
-            from weasyprint import HTML
-
-            return HTML(string=html).write_pdf(), "weasyprint"
+            return html_class(string=html).write_pdf(), "weasyprint"
         except Exception:
             logger.exception("WeasyPrint failed; falling back to the fpdf2 renderer.")
     return _render_pdf_fallback(context), "fpdf2"

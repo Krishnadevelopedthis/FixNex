@@ -1,0 +1,154 @@
+# ===========================================================================
+#  PR-CAMPUS — local development / demonstration stack
+#
+#    docker compose up --build
+#    Frontend  http://localhost:5173
+#    API docs  http://localhost:8000/api/docs
+#    MinIO     http://localhost:9001
+#
+#  The ZAP daemon is optional and lives behind a profile, because it is the
+#  heaviest service in the stack:
+#    docker compose --profile zap up --build
+# ===========================================================================
+
+name: pr-campus
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-prcampus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-prcampus}
+      POSTGRES_DB: ${POSTGRES_DB:-prcampus}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-prcampus} -d ${POSTGRES_DB:-prcampus}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-prcampus}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-prcampus-secret}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # web console
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    entrypoint: ["/app/entrypoint.sh"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-prcampus}:${POSTGRES_PASSWORD:-prcampus}@postgres:5432/${POSTGRES_DB:-prcampus}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      TASK_RUNNER: ${TASK_RUNNER:-auto}
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-auto}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-prcampus}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-prcampus-secret}
+      MINIO_BUCKET: ${MINIO_BUCKET:-pr-campus-evidence}
+      # REQUIRED in production — generate with:
+      #   python -c "import secrets; print(secrets.token_urlsafe(48))"
+      JWT_SECRET: ${JWT_SECRET:-}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost}
+      NVD_API_KEY: ${NVD_API_KEY:-}
+      SSL_LABS_API_KEY: ${SSL_LABS_API_KEY:-}
+      ZAP_API_URL: ${ZAP_API_URL:-http://zap:8080}
+      ZAP_API_KEY: ${ZAP_API_KEY:-}
+      SEED_DEMO_ON_START: ${SEED_DEMO_ON_START:-true}
+    volumes:
+      - evidence_data:/app/storage
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["celery", "-A", "app.workers.celery_app.celery_app", "worker", "--loglevel=info", "--concurrency=4"]
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-prcampus}:${POSTGRES_PASSWORD:-prcampus}@postgres:5432/${POSTGRES_DB:-prcampus}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      TASK_RUNNER: celery
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-auto}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-prcampus}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-prcampus-secret}
+      JWT_SECRET: ${JWT_SECRET:-}
+      NVD_API_KEY: ${NVD_API_KEY:-}
+      ZAP_API_URL: ${ZAP_API_URL:-http://zap:8080}
+    volumes:
+      - evidence_data:/app/storage
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Optional: OWASP ZAP daemon. Enable with `--profile zap`.
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    profiles: ["zap"]
+    command: >
+      zap.sh -daemon -host 0.0.0.0 -port 8080
+      -config api.addrs.addr.name=.*
+      -config api.addrs.addr.regex=true
+      -config api.disablekey=true
+    ports:
+      - "8090:8080"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  evidence_data:
