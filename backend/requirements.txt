@@ -1,0 +1,39 @@
+# ---- Web framework ----
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+websockets==14.1
+
+# ---- Data / ORM ----
+SQLAlchemy==2.0.36
+alembic==1.14.0
+psycopg2-binary==2.9.10
+pydantic==2.10.4
+pydantic-settings==2.7.0
+email-validator==2.2.0
+
+# ---- Security ----
+argon2-cffi==23.1.0
+PyJWT==2.10.1
+cvss==3.4
+
+# ---- Background processing ----
+celery==5.4.0
+redis==5.2.1
+
+# ---- Object storage (evidence) ----
+minio==7.2.13
+
+# ---- Scanner / enrichment HTTP client ----
+httpx==0.28.1
+
+# ---- Reporting ----
+Jinja2==3.1.5
+weasyprint==63.1        # primary PDF engine (needs pango/cairo system libs)
+fpdf2==2.8.2            # dependency-free fallback PDF engine
+pandas==2.2.3
+openpyxl==3.1.5
+
+# ---- Testing ----
+pytest==8.3.4
+pytest-cov==6.0.0

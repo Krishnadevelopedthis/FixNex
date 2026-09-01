@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ assessment.name }} — Security Assessment Report</title>
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 16mm 18mm 16mm;
+    @bottom-center {
+      content: "PR-CAMPUS  ·  {{ assessment.reference }}  ·  Page " counter(page) " of " counter(pages);
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 8pt; color: #6b7280;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 9.5pt; line-height: 1.5; color: #111827; margin: 0;
+  }
+  h1, h2, h3, h4 { color: #0f172a; margin: 0 0 8px; line-height: 1.25; }
+  h1 { font-size: 26pt; letter-spacing: -0.5px; }
+  h2 { font-size: 15pt; margin-top: 26px; padding-bottom: 6px; border-bottom: 2px solid #e5e7eb; }
+  h3 { font-size: 11.5pt; margin-top: 16px; }
+  p { margin: 0 0 8px; }
+  a { color: #1d4ed8; text-decoration: none; word-break: break-all; }
+
+  /* ---------- cover ---------- */
+  .cover { page-break-after: always; padding-top: 55mm; }
+  .cover .eyebrow {
+    font-size: 9pt; letter-spacing: 3px; text-transform: uppercase;
+    color: #2563eb; font-weight: 700; margin-bottom: 14px;
+  }
+  .cover h1 { font-size: 30pt; margin-bottom: 6px; }
+  .cover .subtitle { font-size: 13pt; color: #475569; margin-bottom: 34px; }
+  .cover-meta { border-top: 3px solid #0f172a; padding-top: 14px; width: 100%; }
+  .cover-meta td { padding: 5px 0; font-size: 10pt; vertical-align: top; }
+  .cover-meta td:first-child {
+    color: #64748b; width: 42%; text-transform: uppercase;
+    font-size: 8pt; letter-spacing: 1px; padding-right: 12px;
+  }
+  .confidential {
+    margin-top: 40px; padding: 12px 14px; background: #f8fafc;
+    border-left: 4px solid #0f172a; font-size: 8.5pt; color: #475569;
+  }
+  .demo-banner {
+    margin-top: 16px; padding: 12px 14px; background: #fffbeb;
+    border: 1.5px solid #f59e0b; border-radius: 4px;
+    font-size: 9pt; color: #92400e; font-weight: 600;
+  }
+
+  /* ---------- tables ---------- */
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 16px; }
+  th, td { text-align: left; padding: 6px 8px; vertical-align: top; font-size: 8.5pt; }
+  thead th {
+    background: #0f172a; color: #fff; font-size: 7.5pt;
+    text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600;
+  }
+  tbody tr { border-bottom: 1px solid #e5e7eb; }
+  tbody tr:nth-child(even) { background: #f9fafb; }
+
+  /* ---------- badges ---------- */
+  .badge {
+    display: inline-block; padding: 2px 7px; border-radius: 3px;
+    font-size: 7.5pt; font-weight: 700; color: #fff;
+    text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap;
+  }
+  .status {
+    display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 7.5pt;
+    font-weight: 600; background: #e2e8f0; color: #334155; white-space: nowrap;
+  }
+
+  /* ---------- severity summary ---------- */
+  .summary-grid { width: 100%; margin: 14px 0 6px; }
+  .summary-grid td { width: 20%; padding: 0 4px; }
+  .stat {
+    border: 1px solid #e5e7eb; border-top-width: 4px; border-radius: 4px;
+    padding: 10px 8px; text-align: center;
+  }
+  .stat .value { font-size: 19pt; font-weight: 700; line-height: 1; }
+  .stat .label {
+    font-size: 7pt; text-transform: uppercase; letter-spacing: 0.8px;
+    color: #64748b; margin-top: 5px;
+  }
+
+  /* ---------- findings ---------- */
+  .finding { page-break-inside: avoid; margin-bottom: 22px; }
+  .finding-header {
+    border-left: 5px solid #cbd5e1; padding: 8px 0 8px 12px; margin-bottom: 10px;
+  }
+  .finding-header .ref {
+    font-size: 8pt; color: #64748b; font-weight: 700; letter-spacing: 1px;
+  }
+  .finding-header h3 { margin: 3px 0 6px; font-size: 12.5pt; }
+  .meta-table td { padding: 4px 8px; font-size: 8.5pt; border-bottom: 1px solid #f1f5f9; }
+  .meta-table td:first-child {
+    width: 24%; color: #64748b; font-weight: 600; font-size: 7.5pt;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .section-label {
+    font-size: 7.5pt; text-transform: uppercase; letter-spacing: 1px;
+    color: #64748b; font-weight: 700; margin: 12px 0 4px;
+  }
+  pre {
+    background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 3px;
+    padding: 8px 10px; font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 7.5pt; white-space: pre-wrap; word-break: break-word;
+    margin: 0 0 8px; max-height: 200px; overflow: hidden; color: #334155;
+  }
+  .note {
+    background: #f8fafc; border-left: 3px solid #94a3b8;
+    padding: 8px 10px; font-size: 8.5pt; color: #475569; margin: 8px 0;
+  }
+  .muted { color: #64748b; font-size: 8.5pt; }
+  ul { margin: 4px 0 8px; padding-left: 18px; }
+  li { margin-bottom: 3px; font-size: 8.5pt; }
+</style>
+</head>
+<body>
+
+<!-- ============================ 1. COVER ============================ -->
+<section class="cover">
+  <div class="eyebrow">PR-CAMPUS · Security Assessment Report</div>
+  <h1>{{ assessment.name }}</h1>
+  <div class="subtitle">{{ assessment.client_name or "Internal engagement" }}</div>
+
+  <table class="cover-meta">
+    <tr><td>Report reference</td><td><strong>{{ assessment.reference }}</strong></td></tr>
+    <tr><td>Engagement type</td><td>{{ assessment.engagement_type or "Web application security assessment" }}</td></tr>
+    <tr><td>Assessment period</td><td>
+      {% if assessment.start_date %}{{ assessment.start_date.strftime("%d %B %Y") }}{% else %}—{% endif %}
+      to
+      {% if assessment.end_date %}{{ assessment.end_date.strftime("%d %B %Y") }}{% else %}ongoing{% endif %}
+    </td></tr>
+    <tr><td>Status</td><td>{{ assessment.status }}</td></tr>
+    <tr><td>Targets assessed</td><td>{{ counters.targets }}</td></tr>
+    <tr><td>Total findings</td><td>{{ counters.findings_total }}</td></tr>
+    <tr><td>Report generated</td><td>{{ generated_at.strftime("%d %B %Y at %H:%M UTC") }}</td></tr>
+  </table>
+
+  {% if contains_demo_data %}
+  <div class="demo-banner">
+    ⚠ THIS REPORT CONTAINS SEEDED DEMONSTRATION DATA<br>
+    Findings marked <strong>DEMO</strong> were created by the PR-CAMPUS demonstration seeder to
+    illustrate the assessment workflow. They are <strong>not</strong> the results of a real scan
+    against a real system and must not be treated as such.
+  </div>
+  {% endif %}
+
+  <div class="confidential">
+    <strong>CONFIDENTIAL.</strong> This report contains security vulnerability information about
+    the systems named above. Distribute only to authorised personnel. All testing described here
+    was performed against explicitly authorised targets within a defined scope.
+  </div>
+</section>
+
+<!-- ==================== 2. ASSESSMENT INFORMATION ==================== -->
+<h2>1. Assessment Information</h2>
+<table class="meta-table">
+  <tr><td>Assessment</td><td>{{ assessment.name }} ({{ assessment.reference }})</td></tr>
+  <tr><td>Client / project</td><td>{{ assessment.client_name or "—" }}</td></tr>
+  <tr><td>Description</td><td>{{ assessment.description or "—" }}</td></tr>
+  <tr><td>Lead</td><td>{{ assessment.created_by.full_name if assessment.created_by else "—" }}</td></tr>
+</table>
+
+{% if team %}
+<h3>Assessment team</h3>
+<table>
+  <thead><tr><th>Name</th><th>Platform role</th><th>Engagement role</th></tr></thead>
+  <tbody>
+    {% for member in team %}
+    <tr><td>{{ member.name }}</td><td>{{ member.role }}</td><td>{{ member.assignment or "Team member" }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<!-- ============================ 3. SCOPE ============================ -->
+<h2>2. Scope</h2>
+<p>Testing was strictly limited to the authorised scope below. PR-CAMPUS rejects any scan
+request for a target that does not match an authorised scope rule.</p>
+
+{% if scope_rules %}
+<table>
+  <thead><tr><th>Type</th><th>Value</th><th>Authorisation</th><th>Note</th></tr></thead>
+  <tbody>
+    {% for rule in scope_rules %}
+    <tr>
+      <td>{{ rule.rule_type }}</td>
+      <td><code>{{ rule.value }}</code></td>
+      <td>{% if rule.is_exclusion %}<span class="status">EXCLUDED</span>{% else %}<span class="status">AUTHORISED</span>{% endif %}</td>
+      <td>{{ rule.note or "—" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No scope rules were recorded for this assessment.</p>
+{% endif %}
+
+<h3>Targets</h3>
+<table>
+  <thead><tr><th>Ref</th><th>Name</th><th>Type</th><th>Target</th><th>Authorised by</th></tr></thead>
+  <tbody>
+    {% for target in targets %}
+    <tr>
+      <td>{{ target.reference }}</td>
+      <td>{{ target.name }}</td>
+      <td>{{ target.target_type }}</td>
+      <td><code>{{ target.value }}</code></td>
+      <td>{{ target.authorized_by.full_name if target.authorized_by else "—" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- ========================= 4. METHODOLOGY ========================= -->
+<h2>3. Methodology</h2>
+<p>{{ assessment.methodology or "OWASP Web Security Testing Guide informed methodology." }}</p>
+<p>PR-CAMPUS orchestrates multiple security tools, normalises their output into a single
+finding format, correlates duplicate detections, and then manages each finding through
+verification, evidence collection, risk analysis, remediation and retesting:</p>
+<ul>
+  <li><strong>Reconnaissance</strong> — technology fingerprinting and service discovery.</li>
+  <li><strong>Automated scanning</strong> — {% if scanners_used %}{{ scanners_used|join(", ") }}{% else %}configured scanner adapters{% endif %}.</li>
+  <li><strong>Normalisation &amp; correlation</strong> — results from every tool are mapped to a common
+      schema and deduplicated, so one issue reported by several tools is a single finding.</li>
+  <li><strong>Manual verification</strong> — an analyst confirms each finding or records it as a
+      false positive with a documented reason.</li>
+  <li><strong>Evidence collection</strong> — artefacts are stored with a SHA-256 hash and chain of custody.</li>
+  <li><strong>Risk analysis</strong> — CVSS v3.1 base scoring plus a PR-CAMPUS contextual risk score
+      that incorporates asset criticality, data sensitivity and exposure.</li>
+  <li><strong>Remediation &amp; retest</strong> — findings are assigned with an SLA and closed only
+      after a passing retest.</li>
+</ul>
+
+<h3>Scans performed</h3>
+<table>
+  <thead><tr><th>Ref</th><th>Profile</th><th>Target</th><th>Status</th><th>Findings</th><th>Completed</th></tr></thead>
+  <tbody>
+    {% for scan in scans %}
+    <tr>
+      <td>{{ scan.reference }}</td>
+      <td>{{ scan.profile }}</td>
+      <td>{{ scan.target.value if scan.target else "—" }}</td>
+      <td>{{ scan.status }}</td>
+      <td>{{ scan.findings_count }}</td>
+      <td>{{ scan.completed_at.strftime("%Y-%m-%d %H:%M") if scan.completed_at else "—" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="muted">No automated scans were recorded.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- ====================== 5. EXECUTIVE SUMMARY ====================== -->
+<h2>4. Executive Summary</h2>
+<p>{{ executive_summary }}</p>
+
+<table class="summary-grid">
+  <tr>
+    {% for level in ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFORMATIONAL"] %}
+    <td>
+      <div class="stat" style="border-top-color: {{ severity_colours[level] }}">
+        <div class="value" style="color: {{ severity_colours[level] }}">{{ severity_counts.get(level, 0) }}</div>
+        <div class="label">{{ level|capitalize }}</div>
+      </div>
+    </td>
+    {% endfor %}
+  </tr>
+</table>
+
+<!-- ======================== 6. RISK OVERVIEW ======================== -->
+<h2>5. Risk Overview</h2>
+<table class="meta-table">
+  <tr><td>Open findings</td><td>{{ counters.findings_open }}</td></tr>
+  <tr><td>Closed findings</td><td>{{ counters.findings_closed }}</td></tr>
+  <tr><td>False positives</td><td>{{ counters.findings_false_positive }}</td></tr>
+  <tr><td>Remediation progress</td><td>{{ counters.remediation_progress }}%</td></tr>
+  <tr><td>Past SLA deadline</td><td>{{ counters.overdue }}</td></tr>
+  <tr><td>Highest severity present</td><td>{{ counters.highest_risk_level or "None" }}</td></tr>
+</table>
+<div class="note">
+  <strong>On scoring.</strong> Each finding carries a CVSS v3.1 base score computed from its vector
+  using the reference algorithm. The <em>PR-CAMPUS contextual risk score</em> shown alongside it is a
+  platform-specific rating that adjusts the CVSS base score for asset criticality, data sensitivity,
+  exposure and exploitability. It is <strong>not</strong> an official CVSS rating.
+</div>
+
+<!-- ==================== 7. VULNERABILITY SUMMARY ==================== -->
+<h2>6. Findings Summary</h2>
+<table>
+  <thead>
+    <tr><th>Ref</th><th>Finding</th><th>Severity</th><th>CVSS</th><th>Risk</th><th>Status</th><th>SLA</th></tr>
+  </thead>
+  <tbody>
+    {% for f in findings %}
+    <tr>
+      <td>{{ f.reference }}</td>
+      <td>{{ f.title }}{% if f.data_origin == "SEEDED_DEMO" %} <span class="status">DEMO</span>{% endif %}</td>
+      <td><span class="badge" style="background: {{ f.severity_colour }}">{{ f.severity }}</span></td>
+      <td>{{ "%.1f"|format(f.cvss_score) if f.cvss_score is not none else "—" }}</td>
+      <td>{{ "%.1f"|format(f.risk_score) if f.risk_score is not none else "—" }}</td>
+      <td><span class="status">{{ f.status }}</span></td>
+      <td>{{ f.sla_status }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="muted">No findings matched the selected report options.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- ==================== 8. DETAILED FINDINGS ==================== -->
+<h2>7. Detailed Findings</h2>
+{% for f in findings %}
+<div class="finding">
+  <div class="finding-header" style="border-left-color: {{ f.severity_colour }}">
+    <div class="ref">{{ f.reference }}</div>
+    <h3>{{ f.title }}</h3>
+    <span class="badge" style="background: {{ f.severity_colour }}">{{ f.severity }}</span>
+    {% if f.cvss_score is not none %}<span class="status">CVSS {{ "%.1f"|format(f.cvss_score) }}</span>{% endif %}
+    {% if f.risk_level %}<span class="status">Contextual risk: {{ f.risk_level }}</span>{% endif %}
+    <span class="status">{{ f.status }}</span>
+    {% if f.data_origin == "SEEDED_DEMO" %}<span class="status">DEMO DATA</span>{% endif %}
+  </div>
+
+  <table class="meta-table">
+    <tr><td>Affected target</td><td>{{ f.target or "—" }}</td></tr>
+    {% if f.endpoint %}<tr><td>Endpoint</td><td>{{ f.endpoint }}</td></tr>{% endif %}
+    {% if f.parameter %}<tr><td>Parameter</td><td><code>{{ f.parameter }}</code></td></tr>{% endif %}
+    <tr><td>Detected by</td><td>{{ f.sources|join(", ") }}</td></tr>
+    {% if f.cvss_vector %}<tr><td>CVSS vector</td><td><code>{{ f.cvss_vector }}</code></td></tr>{% endif %}
+    {% if f.cwe %}<tr><td>Weakness (CWE)</td><td>{{ f.cwe }}</td></tr>{% endif %}
+    {% if f.cves %}<tr><td>CVE</td><td>{{ f.cves|join(", ") }}</td></tr>{% endif %}
+    <tr><td>Verification</td><td>{{ f.verification_status }}</td></tr>
+    {% if f.assigned_to %}<tr><td>Assigned to</td><td>{{ f.assigned_to }}</td></tr>{% endif %}
+    {% if f.remediation_status %}<tr><td>Remediation</td><td>{{ f.remediation_status }} · SLA {{ f.sla_status }}</td></tr>{% endif %}
+  </table>
+
+  {% if f.description %}
+  <div class="section-label">Description</div>
+  <p>{{ f.description }}</p>
+  {% endif %}
+
+  {% if f.technical_details %}
+  <div class="section-label">Technical detail</div>
+  <pre>{{ f.technical_details }}</pre>
+  {% endif %}
+
+  {% if f.evidence %}
+  <div class="section-label">Evidence</div>
+  <table>
+    <thead><tr><th>File</th><th>Description</th><th>SHA-256</th><th>Collected by</th></tr></thead>
+    <tbody>
+      {% for e in f.evidence %}
+      <tr>
+        <td>{{ e.filename }} (v{{ e.version }})</td>
+        <td>{{ e.description or "—" }}</td>
+        <td style="font-family: monospace; font-size: 6.5pt">{{ e.sha256[:32] }}…</td>
+        <td>{{ e.uploaded_by or "—" }}<br><span class="muted">{{ e.created_at.strftime("%Y-%m-%d %H:%M") }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if f.remediation %}
+  <div class="section-label">Recommended remediation</div>
+  <p>{{ f.remediation }}</p>
+  {% endif %}
+
+  {% if f.retests %}
+  <div class="section-label">Retest history</div>
+  <table>
+    <thead><tr><th>Result</th><th>Summary</th><th>Performed by</th><th>Date</th></tr></thead>
+    <tbody>
+      {% for r in f.retests %}
+      <tr>
+        <td><strong>{{ r.result }}</strong></td>
+        <td>{{ r.summary or "—" }}</td>
+        <td>{{ r.performed_by or "—" }}</td>
+        <td>{{ r.performed_at.strftime("%Y-%m-%d %H:%M") if r.performed_at else "—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if f.references %}
+  <div class="section-label">References</div>
+  <ul>{% for ref in f.references %}<li><a href="{{ ref }}">{{ ref }}</a></li>{% endfor %}</ul>
+  {% endif %}
+</div>
+{% else %}
+<p class="muted">No findings to report.</p>
+{% endfor %}
+
+<!-- ==================== 9. FALSE POSITIVES ==================== -->
+{% if false_positives %}
+<h2>8. Reviewed and Dismissed (False Positives)</h2>
+<p>The following scanner results were manually reviewed and determined not to be genuine
+issues. They are retained for audit and are excluded from the risk figures in this report.</p>
+<table>
+  <thead><tr><th>Ref</th><th>Finding</th><th>Reason dismissed</th><th>Verified by</th></tr></thead>
+  <tbody>
+    {% for fp in false_positives %}
+    <tr>
+      <td>{{ fp.reference }}</td>
+      <td>{{ fp.title }}</td>
+      <td>{{ fp.reason or "—" }}</td>
+      <td>{{ fp.verified_by or "—" }}{% if fp.verified_at %}<br><span class="muted">{{ fp.verified_at.strftime("%Y-%m-%d") }}</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<!-- ==================== 10. AUDIT SUMMARY ==================== -->
+{% if audit_summary %}
+<h2>9. Audit Trail Summary</h2>
+<p>The most recent recorded actions for this assessment. The full immutable trail is
+available in the platform.</p>
+<table>
+  <thead><tr><th>Timestamp (UTC)</th><th>Actor</th><th>Action</th><th>Detail</th></tr></thead>
+  <tbody>
+    {% for entry in audit_summary %}
+    <tr>
+      <td>{{ entry.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      <td>{{ entry.actor or "system" }}</td>
+      <td>{{ entry.action }}</td>
+      <td>{{ entry.description or "—" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<!-- ==================== 11. CONCLUSION ==================== -->
+<h2>10. Conclusion</h2>
+<p>
+  {{ counters.findings_total }} finding(s) were recorded across {{ counters.targets }} authorised
+  target(s). {{ counters.findings_closed }} have been remediated and verified closed by retest, and
+  {{ counters.findings_open }} remain open.
+  {% if counters.overdue %}{{ counters.overdue }} finding(s) are past their remediation SLA and should be escalated.{% endif %}
+</p>
+<p>
+  Findings should be remediated in order of contextual risk, addressing Critical and High severity
+  issues first. Each remediated issue must be marked ready for retest in PR-CAMPUS so that a
+  security engineer can verify the fix; a finding is closed only after a passing retest.
+</p>
+<div class="note">
+  Report generated by PR-CAMPUS on {{ generated_at.strftime("%d %B %Y at %H:%M UTC") }}.
+  Testing was limited to the authorised scope defined in section 2.
+</div>
+
+</body>
+</html>
