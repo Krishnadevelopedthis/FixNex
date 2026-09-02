@@ -120,3 +120,55 @@ def test_adapter_supports_matrix():
     assert zap.supports(TargetType.HOST, ScanProfile.STANDARD) is False
     # ...and it is not part of the Light profile.
     assert zap.supports(TargetType.WEB_APP, ScanProfile.LIGHT) is False
+
+
+# ------------------------------------------------------- port scan coverage
+def test_port_scan_always_probes_the_targets_own_port():
+    """Regression: the sweep skipped the one port the assessment is about.
+
+    A target served on a port outside the fixed list - 8000, 5173, anything
+    bespoke - produced a scan that never touched it, so the service under
+    assessment was reported as though it were not listening at all.
+    """
+    from app.scanners.port_scan import _COMMON_PORTS
+
+    bespoke = 47231
+    assert bespoke not in _COMMON_PORTS
+
+    ctx = ScanContext(target_value=f"http://127.0.0.1:{bespoke}", port=bespoke, timeout=5)
+    ports = dict(_COMMON_PORTS)
+    if ctx.effective_port and ctx.effective_port not in ports:
+        ports[ctx.effective_port] = ("Target service", "INFORMATIONAL", None)
+    assert bespoke in ports, "the target's own port must be added to the sweep"
+
+
+@pytest.mark.parametrize("port", [3000, 5000, 8000, 8080, 8888])
+def test_common_application_ports_are_covered(port):
+    """These are where web applications actually live."""
+    from app.scanners.port_scan import _COMMON_PORTS
+
+    assert port in _COMMON_PORTS, f"port {port} is not swept"
+
+
+def test_port_scan_detects_a_listener_on_the_target_port():
+    """End-to-end against a real socket, so the sweep is genuinely exercised."""
+    import socket
+    import threading
+
+    server = socket.socket()
+    server.bind(("127.0.0.1", 0))
+    server.listen(1)
+    port = server.getsockname()[1]
+    threading.Thread(target=lambda: server.accept(), daemon=True).start()
+
+    try:
+        adapter = scanner_registry.get("port_scan")
+        result = adapter.run(
+            ScanContext(target_value=f"http://127.0.0.1:{port}", port=port, timeout=15)
+        )
+        assert port in (result.metrics.get("open_ports") or []), (
+            f"a live listener on {port} was not detected"
+        )
+        assert any(str(port) in f.title for f in result.findings)
+    finally:
+        server.close()

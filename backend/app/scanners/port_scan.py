@@ -34,7 +34,11 @@ _COMMON_PORTS: dict[int, tuple[str, str, str | None]] = {
     3389: ("RDP", Severity.HIGH, "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"),
     5432: ("PostgreSQL", Severity.HIGH, "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"),
     6379: ("Redis", Severity.CRITICAL, "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"),
+    3000: ("HTTP application", Severity.INFORMATIONAL, None),
+    5000: ("HTTP application", Severity.INFORMATIONAL, None),
+    8000: ("HTTP application", Severity.INFORMATIONAL, None),
     8080: ("HTTP alternate", Severity.INFORMATIONAL, None),
+    8888: ("HTTP application", Severity.INFORMATIONAL, None),
     8443: ("HTTPS alternate", Severity.INFORMATIONAL, None),
     9200: ("Elasticsearch", Severity.CRITICAL, "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"),
     27017: ("MongoDB", Severity.CRITICAL, "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"),
@@ -72,6 +76,13 @@ class PortScanAdapter(ScannerAdapter):
         ports = dict(_COMMON_PORTS)
         if ctx.profile == ScanProfile.COMPREHENSIVE:
             ports.update(_COMPREHENSIVE_EXTRA)
+
+        # The target's own port must always be probed. Without this a service
+        # on an unlisted port - 8081, 9443, anything bespoke - produced a sweep
+        # that never touched the one port the assessment is actually about.
+        own_port = ctx.effective_port
+        if own_port and own_port not in ports:
+            ports[own_port] = ("Target service", Severity.INFORMATIONAL, None)
 
         result = ScanResult(
             scanner=self.name,
