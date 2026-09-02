@@ -17,6 +17,8 @@ import { errorMessage, useToast } from "@/components/ui/toast"
 import { SEVERITY_DOT } from "@/lib/severity"
 import { cn, formatDate } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
+import { motion } from "motion/react"
+import { TRANSITION, fadeUp, useEnterOnce, useMotionPrefs } from "@/lib/motion"
 
 function NewAssessmentDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const [name, setName] = React.useState("")
@@ -100,11 +102,13 @@ export default function AssessmentsPage() {
   const { can } = useAuth()
   const [search, setSearch] = React.useState("")
   const [newOpen, setNewOpen] = React.useState(false)
+  const { transition, variants, delay } = useMotionPrefs()
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["assessments", { search }],
     queryFn: () => assessmentApi.list({ page_size: 60, search: search || undefined }),
   })
+  const enterCards = useEnterOnce(!!data?.items.length)
 
   return (
     <>
@@ -143,12 +147,19 @@ export default function AssessmentsPage() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {data?.items.map((assessment) => {
+          {data?.items.map((assessment, index) => {
             const stats = assessment.stats
             const severities = stats?.severity
             return (
-              <Link key={assessment.id} to={`/assessments/${assessment.id}`}>
-                <Card className="h-full transition-colors hover:border-primary/40">
+              <motion.div
+                key={assessment.id}
+                variants={variants(fadeUp)}
+                initial={enterCards ? "hidden" : false}
+                animate="visible"
+                transition={{ ...transition(TRANSITION.base), delay: enterCards ? delay(index) : 0 }}
+              >
+              <Link to={`/assessments/${assessment.id}`}>
+                <Card interactive className="h-full">
                   <CardContent className="space-y-3 p-5">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
@@ -210,6 +221,7 @@ export default function AssessmentsPage() {
                   </CardContent>
                 </Card>
               </Link>
+              </motion.div>
             )
           })}
         </div>

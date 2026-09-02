@@ -1,5 +1,6 @@
 import * as React from "react"
-import { NavLink, Outlet, useNavigate } from "react-router-dom"
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
+import { AnimatePresence, motion } from "motion/react"
 import {
   Activity, BadgeCheck, Bug, ChevronDown, ClipboardList, Crosshair, FileText,
   FolderKanban, Gauge, LayoutDashboard, LogOut, Menu, Moon, Radar, Server,
@@ -11,6 +12,7 @@ import { cn, initials } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip } from "@/components/ui/misc"
+import { TRANSITION, fadeUp, useMotionPrefs } from "@/lib/motion"
 
 interface NavItem {
   to: string
@@ -81,6 +83,8 @@ export function AppLayout() {
   const { user, logout } = useAuth()
   const { theme, toggle } = useTheme()
   const navigate = useNavigate()
+  const location = useLocation()
+  const { transition, variants } = useMotionPrefs()
   const [mobileOpen, setMobileOpen] = React.useState(false)
   const [menuOpen, setMenuOpen] = React.useState(false)
 
@@ -189,9 +193,21 @@ export function AppLayout() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1600px] px-4 py-6 lg:px-8">
-            <Outlet />
-          </div>
+          {/* Keyed on pathname so each route enters as its own element.
+              mode="wait" would blank the pane between routes; overlapping the
+              short fade keeps navigation feeling immediate. */}
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={location.pathname}
+              variants={variants(fadeUp)}
+              initial="hidden"
+              animate="visible"
+              transition={transition(TRANSITION.base)}
+              className="mx-auto w-full max-w-[1600px] px-4 py-6 lg:px-8"
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>

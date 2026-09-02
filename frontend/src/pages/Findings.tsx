@@ -9,11 +9,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge, DemoBadge, SeverityBadge, SlaBadge, StatusBadge } from "@/components/ui/badge"
 import { EmptyState, ErrorState, TableSkeleton, Tooltip } from "@/components/ui/misc"
-import { Pagination, SortableTH, Table, TBody, TD, TH, THead, TR } from "@/components/ui/table"
+import { MotionTR, Pagination, SortableTH, Table, TBody, TD, TH, THead, TR } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SEVERITIES } from "@/lib/severity"
 import { cn, relativeTime, titleCase } from "@/lib/utils"
 import { NewFindingDialog } from "@/components/finding-dialogs"
+import { useEnterOnce } from "@/lib/motion"
 import { useAuth } from "@/hooks/useAuth"
 
 const STATUSES = [
@@ -110,6 +111,10 @@ export default function FindingsPage() {
     queryKey: ["findings", query],
     queryFn: () => findingApi.list(query),
   })
+
+  // Stagger the rows in on the first populated render only; a refetch that
+  // returns the same rows must not replay the cascade under the reader.
+  const enterRows = useEnterOnce(!!data?.items.length)
 
   // Keep the URL shareable as filters change.
   React.useEffect(() => {
@@ -281,8 +286,8 @@ export default function FindingsPage() {
                 </TR>
               </THead>
               <TBody>
-                {data?.items.map((finding) => (
-                  <TR key={finding.id} className="cursor-pointer">
+                {data?.items.map((finding, index) => (
+                  <MotionTR key={finding.id} index={index} enter={enterRows} className="cursor-pointer">
                     <TD>
                       <Link to={`/findings/${finding.id}`} className="font-mono text-xs font-medium text-primary hover:underline">
                         {finding.reference}
@@ -338,7 +343,7 @@ export default function FindingsPage() {
                     <TD className="whitespace-nowrap text-xs text-muted-foreground">
                       {relativeTime(finding.updated_at)}
                     </TD>
-                  </TR>
+                  </MotionTR>
                 ))}
               </TBody>
             </Table>

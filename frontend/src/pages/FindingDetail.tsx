@@ -143,7 +143,7 @@ export default function FindingDetailPage() {
         title={f.title}
         badge={
           <span className="flex flex-wrap items-center gap-1.5">
-            <SeverityBadge severity={f.severity} />
+            <SeverityBadge severity={f.severity} pulse />
             <StatusBadge status={f.status} />
             {f.data_origin === "SEEDED_DEMO" && <DemoBadge />}
             {f.data_origin === "MANUAL" && <Badge variant="outline">Manual finding</Badge>}

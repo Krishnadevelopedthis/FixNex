@@ -1,4 +1,7 @@
 import { Gauge, Info } from "lucide-react"
+import { motion } from "motion/react"
+import { AnimatedNumber } from "@/components/animated-number"
+import { TRANSITION, useMotionPrefs } from "@/lib/motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { EmptyState, Progress, Separator, Tooltip } from "@/components/ui/misc"
 import { SEVERITY_VAR } from "@/lib/severity"
@@ -19,6 +22,7 @@ function gradeTone(grade: string): { ring: string; text: string } {
 export function PostureCard({ data }: { data: PostureScore }) {
   const tone = gradeTone(data.grade)
   const pct = Math.min(100, Math.max(0, data.score))
+  const { reduced, transition } = useMotionPrefs()
 
   return (
     <Card>
@@ -34,13 +38,18 @@ export function PostureCard({ data }: { data: PostureScore }) {
           <div className="relative h-24 w-24 shrink-0">
             <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90">
               <circle cx="18" cy="18" r="15.5" fill="none" stroke="hsl(var(--muted))" strokeWidth="3.5" />
-              <circle
+              <motion.circle
                 cx="18" cy="18" r="15.5" fill="none" stroke={tone.ring} strokeWidth="3.5"
-                strokeLinecap="round" strokeDasharray={`${pct * 0.974} 100`}
+                strokeLinecap="round"
+                initial={reduced ? false : { pathLength: 0 }}
+                animate={{ pathLength: pct / 100 }}
+                transition={transition(TRANSITION.slow)}
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-2xl font-bold leading-none">{data.score.toFixed(0)}</span>
+              <span className="text-2xl font-bold leading-none tabular-nums">
+                <AnimatedNumber value={data.score} />
+              </span>
               <span className={cn("text-[11px] font-semibold", tone.text)}>Grade {data.grade}</span>
             </div>
           </div>

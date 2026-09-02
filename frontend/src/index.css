@@ -118,3 +118,41 @@
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: none; }
 }
+
+/* Ambient attention cue reserved for CRITICAL severity.
+   Deliberately slow and low-amplitude: this sits under a security finding, so it
+   should read as a steady marker, not an alarm. Opt-in via the `pulse` prop so it
+   never fires across every row of a dense findings table. */
+@keyframes critical-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--severity-critical) / 0); }
+  50%      { box-shadow: 0 0 0 3px hsl(var(--severity-critical) / 0.16); }
+}
+.critical-pulse { animation: critical-pulse 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .critical-pulse { animation: none; } }
+
+/* Attack-path edges arrive after the nodes they connect, so the chain reads as
+   cause then consequence rather than appearing all at once. A fade is used
+   rather than a stroke-draw because enabler edges already carry ReactFlow's
+   marching-dash animation, and the two would fight. */
+@keyframes graph-edge-in { from { opacity: 0 } to { opacity: 1 } }
+.attack-graph-enter .react-flow__edge {
+  animation: graph-edge-in 0.24s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation-delay: 0.28s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .attack-graph-enter .react-flow__edge { animation: none; }
+}
+
+/* Attack-path nodes reveal column by column (prerequisite -> enabler -> outcome).
+   Delay and duration come from graphEnterVars() so the numbers stay in lib/motion.ts. */
+@keyframes graph-node-in {
+  from { opacity: 0; transform: translateY(8px) }
+  to   { opacity: 1; transform: none }
+}
+.graph-node-enter {
+  animation: graph-node-in var(--enter-duration, 0.24s) cubic-bezier(0.22, 0.61, 0.36, 1)
+             var(--enter-delay, 0s) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .graph-node-enter { animation: none; }
+}

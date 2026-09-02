@@ -14,6 +14,7 @@ import { AssetHeatmapCard, PostureCard } from "@/components/posture"
 import { cn, relativeTime, titleCase } from "@/lib/utils"
 import { SEVERITY_DOT } from "@/lib/severity"
 import { useAuth } from "@/hooks/useAuth"
+import { AnimatedNumber } from "@/components/animated-number"
 
 function StatCard({ label, value, icon: Icon, tone = "default", sub, to }: {
   label: string
@@ -31,14 +32,16 @@ function StatCard({ label, value, icon: Icon, tone = "default", sub, to }: {
     warning: "bg-warning/12 text-warning",
   }
   const body = (
-    <Card className={cn("transition-colors", to && "hover:border-primary/40")}>
+    <Card interactive={!!to}>
       <CardContent className="flex items-center gap-4 p-5">
         <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", tones[tone])}>
           <Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-          <p className="text-2xl font-bold leading-tight">{value}</p>
+          <p className="text-2xl font-bold leading-tight tabular-nums">
+            {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
+          </p>
           {sub && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
         </div>
       </CardContent>
@@ -150,7 +153,9 @@ export default function DashboardPage() {
             <div>
               <div className="mb-1.5 flex items-baseline justify-between">
                 <span className="text-sm text-muted-foreground">Resolved</span>
-                <span className="text-2xl font-bold">{remediation.progress_percent.toFixed(0)}%</span>
+                <span className="text-2xl font-bold tabular-nums">
+                  <AnimatedNumber value={remediation.progress_percent} suffix="%" />
+                </span>
               </div>
               <Progress
                 value={remediation.progress_percent}

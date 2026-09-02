@@ -1,6 +1,7 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
+import { CRITICAL_PULSE } from "@/lib/motion"
 import { SEVERITY_BADGE, SEVERITY_DOT, SLA_BADGE, SLA_LABEL, STATUS_BADGE } from "@/lib/severity"
 import { titleCase } from "@/lib/utils"
 
@@ -27,14 +28,22 @@ export function Badge({ className, variant, ...props }: BadgeProps) {
   return <span className={cn(badgeVariants({ variant }), className)} {...props} />
 }
 
-export function SeverityBadge({ severity, showDot = true, className }: {
+export function SeverityBadge({ severity, showDot = true, pulse = false, className }: {
   severity?: string | null
   showDot?: boolean
+  /** Opt in to the ambient CRITICAL pulse. Off by default so dense tables stay still. */
+  pulse?: boolean
   className?: string
 }) {
   const key = severity ?? "INFORMATIONAL"
   return (
-    <span className={cn(badgeVariants({}), SEVERITY_BADGE[key] ?? SEVERITY_BADGE.INFORMATIONAL, "uppercase tracking-wide", className)}>
+    <span className={cn(
+      badgeVariants({}),
+      SEVERITY_BADGE[key] ?? SEVERITY_BADGE.INFORMATIONAL,
+      "uppercase tracking-wide",
+      pulse && key === "CRITICAL" && CRITICAL_PULSE,
+      className,
+    )}>
       {showDot && <span className={cn("sev-dot", SEVERITY_DOT[key])} />}
       {key === "INFORMATIONAL" ? "Info" : titleCase(key)}
     </span>

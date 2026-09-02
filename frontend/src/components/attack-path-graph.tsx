@@ -6,6 +6,7 @@ import {
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 import { AlertTriangle, Bug, Info, ShieldAlert, Waypoints } from "lucide-react"
+import { graphEnterVars } from "@/lib/motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge, SeverityBadge } from "@/components/ui/badge"
 import { EmptyState, Separator, Tooltip } from "@/components/ui/misc"
@@ -19,10 +20,14 @@ import type { AttackPathNode, AttackPathResponse } from "@/types"
 function FindingNode({ data }: NodeProps) {
   const node = data.node as AttackPathNode
   const role = data.role as string
+  const depth = (data.depth as number) ?? 0
   return (
     <div
-      className="w-56 rounded-lg border bg-card p-2.5 shadow-sm"
-      style={{ borderLeft: `3px solid ${SEVERITY_VAR[node.severity] ?? SEVERITY_VAR.INFORMATIONAL}` }}
+      className="graph-node-enter w-56 rounded-lg border bg-card p-2.5 shadow-sm"
+      style={{
+        ...graphEnterVars(depth),
+        borderLeft: `3px solid ${SEVERITY_VAR[node.severity] ?? SEVERITY_VAR.INFORMATIONAL}`,
+      }}
     >
       <Handle type="source" position={Position.Right} className="!h-2 !w-2 !border-0 !bg-muted-foreground" />
       <div className="mb-1 flex items-center justify-between gap-2">
@@ -46,11 +51,16 @@ function FindingNode({ data }: NodeProps) {
 function OutcomeNode({ data }: NodeProps) {
   const node = data.node as AttackPathNode
   const tone = SEVERITY_VAR[node.severity] ?? SEVERITY_VAR.HIGH
+  const depth = (data.depth as number) ?? 0
   return (
     <Tooltip label={node.rationale}>
       <div
-        className="w-60 rounded-lg border-2 border-dashed p-2.5 shadow-sm"
-        style={{ borderColor: tone, background: `color-mix(in srgb, ${tone} 10%, transparent)` }}
+        className="graph-node-enter w-60 rounded-lg border-2 border-dashed p-2.5 shadow-sm"
+        style={{
+          ...graphEnterVars(depth),
+          borderColor: tone,
+          background: `color-mix(in srgb, ${tone} 10%, transparent)`,
+        }}
       >
         <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-0 !bg-muted-foreground" />
         <div className="mb-1 flex items-center gap-1.5">
@@ -86,19 +96,19 @@ function layout(data: AttackPathResponse): { nodes: Node[]; edges: Edge[] } {
   const outcomes = data.nodes.filter((n) => n.kind === "outcome")
 
   const ROW = 108
-  const column = (items: AttackPathNode[], x: number, type: string) =>
+  const column = (items: AttackPathNode[], x: number, type: string, depth: number) =>
     items.map((node, index) => ({
       id: node.id,
       type,
       position: { x, y: index * ROW },
-      data: { node, role: roleOf.get(node.id) ?? "finding" },
+      data: { node, role: roleOf.get(node.id) ?? "finding", depth },
       draggable: true,
     }))
 
   const nodes: Node[] = [
-    ...column(prerequisites, 0, "findingNode"),
-    ...column(enablers, 300, "findingNode"),
-    ...column(outcomes, 620, "outcomeNode"),
+    ...column(prerequisites, 0, "findingNode", 0),
+    ...column(enablers, 300, "findingNode", 1),
+    ...column(outcomes, 620, "outcomeNode", 2),
   ]
 
   const edges: Edge[] = data.edges.map((edge) => ({
@@ -174,7 +184,7 @@ export function AttackPathPanel({ data }: { data: AttackPathResponse }) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="h-[420px] overflow-hidden rounded-lg border bg-muted/20">
+        <div className="attack-graph-enter h-[420px] overflow-hidden rounded-lg border bg-muted/20">
           <ReactFlow
             nodes={nodes}
             edges={edges}

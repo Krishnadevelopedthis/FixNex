@@ -1,5 +1,7 @@
 import * as React from "react"
+import { motion } from "motion/react"
 import { cn } from "@/lib/utils"
+import { TRANSITION, fadeUp, useMotionPrefs } from "@/lib/motion"
 
 export const Table = ({ className, ...props }: React.HTMLAttributes<HTMLTableElement>) => (
   <div className="w-full overflow-x-auto">
@@ -18,6 +20,33 @@ export const TBody = ({ className, ...props }: React.HTMLAttributes<HTMLTableSec
 export const TR = ({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) => (
   <tr className={cn("border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted", className)} {...props} />
 )
+
+/**
+ * A table row that can enter with a staggered delay.
+ *
+ * `enter` is passed by the list, not decided here: the row does not know
+ * whether this is a first paint or the thirtieth poll of the same data.
+ */
+export function MotionTR({
+  index, enter, className, children, ...props
+}: React.HTMLAttributes<HTMLTableRowElement> & { index: number; enter: boolean }) {
+  const { transition, variants, delay } = useMotionPrefs()
+  return (
+    <motion.tr
+      variants={variants(fadeUp)}
+      initial={enter ? "hidden" : false}
+      animate="visible"
+      transition={{ ...transition(TRANSITION.base), delay: enter ? delay(index) : 0 }}
+      className={cn(
+        "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+        className
+      )}
+      {...(props as any)}
+    >
+      {children}
+    </motion.tr>
+  )
+}
 
 export const TH = ({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) => (
   <th
