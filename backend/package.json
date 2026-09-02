@@ -1,0 +1,14 @@
+{
+  "name": "fixnex-backend",
+  "version": "1.0.0",
+  "description": "PR-CAMPUS Backend Service",
+  "scripts": {
+    "start": "uvicorn app.main:app --host 0.0.0.0 --port 8000",
+    "dev": "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload",
+    "migrate": "alembic upgrade head",
+    "seed": "python -m app.cli seed-demo",
+    "test": "pytest tests/ -v",
+    "test:cov": "pytest tests/ --cov=app --cov-report=term"
+  },
+  "pythonVersion": "3.11"
+}

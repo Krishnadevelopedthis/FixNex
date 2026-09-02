@@ -3,6 +3,16 @@ import axios, { AxiosError } from "axios"
 const TOKEN_KEY = "prcampus.access_token"
 const REFRESH_KEY = "prcampus.refresh_token"
 
+// Determine API base URL based on environment
+const getApiBaseUrl = (): string => {
+  // In production (Vercel), use environment variable
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL
+  }
+  // In development, use relative path (proxied by Vite)
+  return "/api"
+}
+
 export const tokenStore = {
   get: () => localStorage.getItem(TOKEN_KEY),
   getRefresh: () => localStorage.getItem(REFRESH_KEY),
@@ -16,10 +26,18 @@ export const tokenStore = {
   },
 }
 
+// Create axios instance with dynamic base URL
+const apiBaseUrl = getApiBaseUrl()
 export const api = axios.create({
-  baseURL: "/api",
+  baseURL: apiBaseUrl,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true,
 })
+
+// Log API base URL in development
+if (import.meta.env.DEV) {
+  console.log(`[API] Base URL: ${apiBaseUrl}`)
+}
 
 api.interceptors.request.use((config) => {
   const token = tokenStore.get()

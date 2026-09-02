@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: fixnex-backend
+    env: python
+    pythonVersion: 3.11
+    plan: starter
+    region: oregon
+    buildCommand: cd backend && pip install --upgrade pip setuptools wheel && pip install --prefer-binary -r requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000
+    healthCheckPath: /api/docs
+    healthCheckInterval: 30
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://fixnex.vercel.app
+      - key: TASK_RUNNER
+        value: thread
+      - key: STORAGE_BACKEND
+        value: local
+      - key: MAX_UPLOAD_BYTES
+        value: "26214400"
+      - key: OFFLINE_MODE
+        value: "false"
+      - key: PYTHONUNBUFFERED
+        value: "1"
