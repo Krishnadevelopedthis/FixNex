@@ -66,18 +66,26 @@ export default function LoginPage() {
             backgroundSize: "28px 28px",
           }}
         />
-        <div className="relative flex items-center gap-2.5">
+        <div className="reveal relative flex items-center gap-2.5" style={{ animationDelay: "0ms" }}>
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
             <ShieldCheck className="h-5 w-5" />
           </div>
-          <span className="text-lg font-bold tracking-tight">PR-CAMPUS</span>
+          <span className="text-lg font-bold tracking-tight">FixNex</span>
         </div>
 
         <div className="relative max-w-md space-y-5">
-          <h1 className="text-3xl font-bold leading-tight tracking-tight">
+          {/* Each line settles in turn, so the panel reads top to bottom rather
+              than arriving as one block. Delays are staggered per element. */}
+          <h1
+            className="reveal text-3xl font-bold leading-tight tracking-tight"
+            style={{ animationDelay: "80ms" }}
+          >
             One platform for the whole security assessment lifecycle.
           </h1>
-          <p className="text-sm leading-relaxed text-primary-foreground/85">
+          <p
+            className="reveal text-sm leading-relaxed text-primary-foreground/85"
+            style={{ animationDelay: "260ms" }}
+          >
             Reconnaissance, scanning, manual verification, evidence, CVSS and contextual
             risk, remediation, retesting, audit and reporting — centralized instead of
             scattered across disconnected tools.
@@ -88,8 +96,12 @@ export default function LoginPage() {
               "Correlation merges duplicate findings across scanners",
               "Scans are restricted to explicitly authorized scope",
               "Every action is written to an append-only audit trail",
-            ].map((line) => (
-              <div key={line} className="flex items-start gap-2.5">
+            ].map((line, index) => (
+              <div
+                key={line}
+                className="reveal flex items-start gap-2.5"
+                style={{ animationDelay: `${440 + index * 140}ms` }}
+              >
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary-foreground/70" />
                 <span className="text-primary-foreground/85">{line}</span>
               </div>
@@ -97,7 +109,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="relative text-xs text-primary-foreground/60">
+        <p className="reveal relative text-xs text-primary-foreground/60" style={{ animationDelay: "1000ms" }}>
           For authorized security testing only.
         </p>
       </div>
@@ -110,14 +122,14 @@ export default function LoginPage() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <ShieldCheck className="h-5 w-5" />
               </div>
-              <span className="text-lg font-bold tracking-tight">PR-CAMPUS</span>
+              <span className="text-lg font-bold tracking-tight">FixNex</span>
             </div>
           </div>
 
           <div className="space-y-1.5">
             <h2 className="text-2xl font-semibold tracking-tight">Sign in</h2>
             <p className="text-sm text-muted-foreground">
-              Use your PR-CAMPUS account to continue.
+              Use your FixNex account to continue.
             </p>
           </div>
 

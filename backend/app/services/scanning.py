@@ -416,7 +416,7 @@ def import_scan_results(
     raw: bytes,
     request: Request | None = None,
 ) -> ScanJob:
-    """Ingest a SARIF report produced by a tool run outside PR-CAMPUS.
+    """Ingest a SARIF report produced by a tool run outside FixNex.
 
     Nothing is executed here — the file is parsed into the same
     `NormalizedFinding` list a live adapter produces and handed to the existing

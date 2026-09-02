@@ -77,7 +77,7 @@ class Finding(Base, TimestampMixin):
     cve_details: Mapped[list] = mapped_column(JSONType, default=list)
     enriched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    # PR-CAMPUS contextual risk — deliberately separate from the CVSS base score.
+    # FixNex contextual risk — deliberately separate from the CVSS base score.
     risk_score: Mapped[float | None] = mapped_column(Float, index=True)
     risk_level: Mapped[str | None] = mapped_column(String(20), index=True)
     impact: Mapped[str | None] = mapped_column(String(20))

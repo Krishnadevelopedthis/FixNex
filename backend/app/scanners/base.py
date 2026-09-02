@@ -1,6 +1,6 @@
 """Scanner adapter contract.
 
-Every security tool PR-CAMPUS integrates is wrapped in an adapter that returns
+Every security tool FixNex integrates is wrapped in an adapter that returns
 `NormalizedFinding` objects. Nothing downstream — correlation, scoring, risk,
 remediation, reporting — knows which tool produced a finding, so a new scanner
 can be added without touching the finding system.

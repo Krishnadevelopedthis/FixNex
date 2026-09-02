@@ -133,7 +133,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Contextual risk distribution</CardTitle>
-            <CardDescription>PR-CAMPUS risk score, not raw CVSS</CardDescription>
+            <CardDescription>FixNex risk score, not raw CVSS</CardDescription>
           </CardHeader>
           <CardContent>
             <RiskDonutChart data={data.risk_distribution} />

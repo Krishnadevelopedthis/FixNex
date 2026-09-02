@@ -86,7 +86,7 @@ def lookup_cve(db: Session, cve_id: str) -> dict:
     if settings.OFFLINE_MODE:
         return _fallback(cve_id, "Offline mode is enabled; NVD was not queried.")
 
-    headers = {"User-Agent": "PR-CAMPUS/1.0"}
+    headers = {"User-Agent": "FixNex/1.0"}
     if settings.NVD_API_KEY:
         headers["apiKey"] = settings.NVD_API_KEY
 

@@ -422,7 +422,7 @@ export default function FindingDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>Scoring</CardTitle>
-              <CardDescription>CVSS base score and PR-CAMPUS contextual risk</CardDescription>
+              <CardDescription>CVSS base score and FixNex contextual risk</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-around">

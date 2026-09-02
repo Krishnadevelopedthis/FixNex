@@ -96,7 +96,7 @@ export function AppLayout() {
           <ShieldCheck className="h-4.5 w-4.5" />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold leading-tight tracking-tight">PR-CAMPUS</p>
+          <p className="truncate text-sm font-bold leading-tight tracking-tight">FixNex</p>
           <p className="truncate text-[10px] leading-tight text-muted-foreground">
             Security Assessment Platform
           </p>

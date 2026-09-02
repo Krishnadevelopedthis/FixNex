@@ -1,4 +1,4 @@
-# PR-CAMPUS
+# FixNex
 
 **Centralized Web Application Security Assessment Platform**
 
@@ -7,7 +7,7 @@ verification in a spreadsheet, keep evidence in a folder, calculate risk by hand
 remediation over email and assemble the report manually at the end. The work is
 connected; the tooling is not.
 
-PR-CAMPUS is the platform around those tools. It does **not** reimplement scanners — it
+FixNex is the platform around those tools. It does **not** reimplement scanners — it
 orchestrates them, normalizes what they produce, and manages the complete journey of a
 security finding:
 
@@ -178,7 +178,7 @@ docker compose --profile zap up --build
 
 ## Local development (without Docker)
 
-PR-CAMPUS runs with **no** Redis, MinIO or scanner binaries installed — each dependency
+FixNex runs with **no** Redis, MinIO or scanner binaries installed — each dependency
 degrades gracefully (see [Design decisions](#design-decisions)). You need Python 3.11+,
 Node 20+ and PostgreSQL.
 
@@ -273,7 +273,7 @@ A five-to-ten minute run through the whole lifecycle.
 
 ## Scanner integrations
 
-PR-CAMPUS never writes its own vulnerability scanner. It ships four **built-in adapters**
+FixNex never writes its own vulnerability scanner. It ships four **built-in adapters**
 in pure Python so that a fresh install produces genuine results with no external tooling,
 and wraps five **external tools** that are used automatically when present.
 
@@ -323,7 +323,7 @@ scanner_registry.register(MyToolAdapter())
 
 ## Security model
 
-PR-CAMPUS is built for **authorized security testing only** and is deliberately not a
+FixNex is built for **authorized security testing only** and is deliberately not a
 general-purpose scanner.
 
 - **Scope enforcement.** Every scan resolves `target ∈ assessment scope` before it runs.

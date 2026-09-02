@@ -537,7 +537,7 @@ def posture_score(db: Session, assessment_id: int | None = None) -> dict:
         "methodology": (
             "The score starts at 100 and subtracts a weighted penalty for each factor below. "
             "Each factor has a maximum deduction and saturates at the count shown, so no "
-            "single factor can sink the score on its own. It is a PR-CAMPUS platform "
+            "single factor can sink the score on its own. It is a FixNex platform "
             "measure, not an industry standard."
         ),
     }

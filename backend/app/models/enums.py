@@ -169,7 +169,7 @@ class DataOrigin(StrEnum):
     surfaced in the UI and in reports.
     """
 
-    REAL_SCAN = "REAL_SCAN"      # produced by a scanner PR-CAMPUS itself executed
+    REAL_SCAN = "REAL_SCAN"      # produced by a scanner FixNex itself executed
     IMPORTED = "IMPORTED"        # produced by a tool elsewhere, uploaded as SARIF
     MANUAL = "MANUAL"            # raised by an analyst during manual testing
     SEEDED_DEMO = "SEEDED_DEMO"  # demo seed data, always labelled as such

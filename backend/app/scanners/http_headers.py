@@ -88,7 +88,7 @@ class HTTPHeadersAdapter(ScannerAdapter):
     label = "HTTP Security Headers"
     description = (
         "Analyses HTTP response headers, cookie attributes and CORS configuration. "
-        "Built into PR-CAMPUS — always available, non-invasive."
+        "Built into FixNex — always available, non-invasive."
     )
     kind = "builtin"
     profiles = (ScanProfile.LIGHT, ScanProfile.STANDARD, ScanProfile.COMPREHENSIVE)
@@ -109,7 +109,7 @@ class HTTPHeadersAdapter(ScannerAdapter):
                 timeout=settings.HTTP_SCAN_TIMEOUT_SECONDS,
                 follow_redirects=True,
                 verify=False,
-                headers={"User-Agent": "PR-CAMPUS/1.0 (authorised security assessment)"},
+                headers={"User-Agent": "FixNex/1.0 (authorised security assessment)"},
             ) as client:
                 response = client.get(ctx.url)
         except Exception as exc:

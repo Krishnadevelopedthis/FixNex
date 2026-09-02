@@ -2,7 +2,7 @@
 
 SARIF is the OASIS interchange format that most SAST, IaC, container and secret
 scanners can emit — Semgrep, Trivy, Gitleaks, Snyk, Checkov, CodeQL, SonarQube
-and many others. Parsing it here means PR-CAMPUS ingests any of those tools
+and many others. Parsing it here means FixNex ingests any of those tools
 without writing a dedicated adapter for each: the file is converted into the
 same `NormalizedFinding` list every adapter produces, then handed to the
 existing ingest pipeline (normalise → correlate → score → risk → persist).

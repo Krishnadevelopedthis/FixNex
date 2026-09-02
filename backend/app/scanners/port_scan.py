@@ -60,7 +60,7 @@ class PortScanAdapter(ScannerAdapter):
     name = ScannerName.PORT_SCAN
     label = "TCP Port Discovery"
     description = (
-        "Non-invasive TCP connect sweep of well-known ports. Built into PR-CAMPUS as the "
+        "Non-invasive TCP connect sweep of well-known ports. Built into FixNex as the "
         "fallback for Nmap — always available."
     )
     kind = "builtin"

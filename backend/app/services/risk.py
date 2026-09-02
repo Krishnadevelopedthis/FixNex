@@ -1,4 +1,4 @@
-"""PR-CAMPUS contextual risk engine.
+"""FixNex contextual risk engine.
 
 This produces a *platform-specific* risk score. It is deliberately kept
 separate from the CVSS base score, which is always preserved unchanged: CVSS
@@ -16,7 +16,7 @@ from app.models.enums import (
 )
 
 DISCLAIMER = (
-    "Contextual risk is a PR-CAMPUS platform score that combines the CVSS base score "
+    "Contextual risk is a FixNex platform score that combines the CVSS base score "
     "with asset criticality, data sensitivity, exposure and exploitability. "
     "It is not an official CVSS rating."
 )

@@ -143,7 +143,7 @@ class RiskBreakdown(BaseModel):
     factors: dict = Field(default_factory=dict)
     explanation: list[str] = Field(default_factory=list)
     disclaimer: str = (
-        "Contextual risk is a PR-CAMPUS platform score that combines the CVSS base "
+        "Contextual risk is a FixNex platform score that combines the CVSS base "
         "score with asset context. It is not an official CVSS rating."
     )
 

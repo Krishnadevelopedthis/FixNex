@@ -368,7 +368,7 @@ export function ScoreDialog({ finding, open, onOpenChange }: {
           <DialogTitle>Adjust scoring and risk context</DialogTitle>
           <DialogDescription>
             CVSS describes the vulnerability; the context below drives the separate
-            PR-CAMPUS contextual risk score.
+            FixNex contextual risk score.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">

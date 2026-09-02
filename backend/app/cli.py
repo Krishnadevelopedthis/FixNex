@@ -90,7 +90,7 @@ def cmd_check(_: argparse.Namespace) -> int:
 
 def main() -> int:
     configure_logging()
-    parser = argparse.ArgumentParser(prog="app.cli", description="PR-CAMPUS management commands")
+    parser = argparse.ArgumentParser(prog="app.cli", description="FixNex management commands")
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("init-db", help="Create all tables directly").set_defaults(func=cmd_init_db)

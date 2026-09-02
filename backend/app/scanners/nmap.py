@@ -43,7 +43,7 @@ class NmapAdapter(ScannerAdapter):
         if not path:
             return ScannerAvailability(
                 False,
-                "The `nmap` binary was not found on PATH. PR-CAMPUS falls back to its "
+                "The `nmap` binary was not found on PATH. FixNex falls back to its "
                 "built-in TCP port sweep.",
             )
         return ScannerAvailability(True, f"Found at {path}", tool_version(settings.NMAP_PATH, "--version"))

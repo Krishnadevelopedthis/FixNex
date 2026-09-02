@@ -1,7 +1,7 @@
 """Compliance mapping and readiness rollup.
 
 Findings are engineering artefacts; audits are asked in the language of control
-frameworks. This maps the weaknesses PR-CAMPUS actually produces onto OWASP Top
+frameworks. This maps the weaknesses FixNex actually produces onto OWASP Top
 10 categories and the NIST SP 800-53 Rev. 5 and ISO/IEC 27001:2022 controls
 those weaknesses bear on, then reports readiness per control.
 

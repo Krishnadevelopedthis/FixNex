@@ -50,7 +50,7 @@ class WhatWebAdapter(ScannerAdapter):
         if not path:
             return ScannerAvailability(
                 False,
-                "The `whatweb` binary was not found on PATH. PR-CAMPUS falls back to its "
+                "The `whatweb` binary was not found on PATH. FixNex falls back to its "
                 "built-in technology fingerprinting adapter.",
             )
         return ScannerAvailability(True, f"Found at {path}", tool_version(settings.WHATWEB_PATH, "--version"))

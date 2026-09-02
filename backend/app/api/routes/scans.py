@@ -232,7 +232,7 @@ def import_scan(
     through the same pipeline as a live scan, so correlation, CVSS/CWE scoring,
     contextual risk and SLA all apply. Findings are recorded with an IMPORTED
     origin and an `imported:<tool>` source so their provenance stays explicit —
-    they are never presented as a scan PR-CAMPUS executed.
+    they are never presented as a scan FixNex executed.
     """
     require_assessment_access(db, user, assessment_id)
 

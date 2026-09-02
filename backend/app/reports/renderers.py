@@ -109,7 +109,7 @@ def _render_pdf_fallback(context: dict) -> bytes:
             self.set_text_color(107, 114, 128)
             self.cell(
                 0, 8,
-                _latin1(f"PR-CAMPUS  ·  {assessment.reference}  ·  Page {self.page_no()}"),
+                _latin1(f"FixNex  ·  {assessment.reference}  ·  Page {self.page_no()}"),
                 align="C",
             )
 
@@ -146,7 +146,7 @@ def _render_pdf_fallback(context: dict) -> bytes:
     pdf.ln(45)
     pdf.set_font("Helvetica", "B", 8)
     pdf.set_text_color(37, 99, 235)
-    pdf.cell(0, 6, _latin1("PR-CAMPUS  ·  SECURITY ASSESSMENT REPORT"), new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, _latin1("FixNex  ·  SECURITY ASSESSMENT REPORT"), new_x="LMARGIN", new_y="NEXT")
     pdf.ln(4)
     pdf.set_font("Helvetica", "B", 26)
     pdf.set_text_color(15, 23, 42)
@@ -182,7 +182,7 @@ def _render_pdf_fallback(context: dict) -> bytes:
             width, 4.6,
             _latin1(
                 "! THIS REPORT CONTAINS SEEDED DEMONSTRATION DATA. Findings marked DEMO were "
-                "created by the PR-CAMPUS demonstration seeder to illustrate the assessment "
+                "created by the FixNex demonstration seeder to illustrate the assessment "
                 "workflow. They are NOT the results of a real scan against a real system."
             ),
             fill=True, new_x="LMARGIN", new_y="NEXT",
@@ -206,7 +206,7 @@ def _render_pdf_fallback(context: dict) -> bytes:
     pdf.add_page()
     heading("1. Scope", top=0)
     body(
-        "Testing was strictly limited to the authorised scope below. PR-CAMPUS rejects any scan "
+        "Testing was strictly limited to the authorised scope below. FixNex rejects any scan "
         "request for a target that does not match an authorised scope rule."
     )
     for rule in context["scope_rules"]:
@@ -226,7 +226,7 @@ def _render_pdf_fallback(context: dict) -> bytes:
     heading("2. Methodology")
     body(assessment.methodology or "OWASP Web Security Testing Guide informed methodology.")
     body(
-        "PR-CAMPUS orchestrates multiple security tools, normalises their output into a single "
+        "FixNex orchestrates multiple security tools, normalises their output into a single "
         "finding format, correlates duplicate detections across tools, and then manages each "
         "finding through verification, evidence collection, risk analysis, remediation and "
         "retesting. Scanners used in this assessment: "
@@ -262,7 +262,7 @@ def _render_pdf_fallback(context: dict) -> bytes:
     pdf.ln(1)
     body(
         "On scoring: each finding carries a CVSS v3.1 base score computed from its vector using "
-        "the reference algorithm. The PR-CAMPUS contextual risk score shown alongside it is a "
+        "the reference algorithm. The FixNex contextual risk score shown alongside it is a "
         "platform-specific rating that adjusts the CVSS base score for asset criticality, data "
         "sensitivity, exposure and exploitability. It is NOT an official CVSS rating.",
         size=8,
@@ -383,7 +383,7 @@ def _render_pdf_fallback(context: dict) -> bytes:
         f"authorised target(s). {counters['findings_closed']} have been remediated and verified "
         f"closed by retest, and {counters['findings_open']} remain open. Findings should be "
         "remediated in order of contextual risk, addressing Critical and High severity issues "
-        "first. A finding is closed in PR-CAMPUS only after a passing retest."
+        "first. A finding is closed in FixNex only after a passing retest."
     )
 
     output = pdf.output()
@@ -425,7 +425,7 @@ def render_json(context: dict) -> bytes:
     payload = {
         "report": {
             "generated_at": context["generated_at"],
-            "generator": "PR-CAMPUS",
+            "generator": "FixNex",
             "contains_demo_data": context["contains_demo_data"],
         },
         "assessment": {

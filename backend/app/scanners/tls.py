@@ -33,7 +33,7 @@ class TLSAdapter(ScannerAdapter):
     label = "TLS / Certificate Analysis"
     description = (
         "Validates the certificate chain, expiry, hostname match, negotiated protocol "
-        "and cipher suite. Built into PR-CAMPUS — always available, non-invasive."
+        "and cipher suite. Built into FixNex — always available, non-invasive."
     )
     kind = "builtin"
     profiles = (ScanProfile.LIGHT, ScanProfile.STANDARD, ScanProfile.COMPREHENSIVE)

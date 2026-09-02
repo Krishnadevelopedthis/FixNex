@@ -1,4 +1,4 @@
-/** Types mirroring the PR-CAMPUS API schemas. */
+/** Types mirroring the FixNex API schemas. */
 
 export type Role =
   | "ADMIN" | "SECURITY_LEAD" | "SECURITY_ENGINEER" | "ANALYST" | "VIEWER" | "DEVELOPER"

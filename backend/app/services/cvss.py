@@ -1,6 +1,6 @@
 """CVSS v3.1 scoring.
 
-Backed by the `cvss` library's reference implementation — PR-CAMPUS never
+Backed by the `cvss` library's reference implementation — FixNex never
 invents its own base-score arithmetic. Where a scanner supplies no vector, a
 representative vector for the reported severity is used and clearly recorded.
 """

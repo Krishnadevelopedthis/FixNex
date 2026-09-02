@@ -110,7 +110,7 @@ Sign in as `engineer@prcampus.io` → open the finding → **Retest → Pass**.
 
 **Administration → System Health**
 
-> "Nmap, Nuclei and ZAP are integrated but optional — PR-CAMPUS ships four built-in
+> "Nmap, Nuclei and ZAP are integrated but optional — FixNex ships four built-in
 > scanners so it produces real findings anywhere. Adding a sixth tool means writing one
 > adapter; nothing downstream changes."
 

@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     )
 
     # ------------------------------------------------------------------ app
-    APP_NAME: str = "PR-CAMPUS"
+    APP_NAME: str = "FixNex"
     APP_DESCRIPTION: str = "Centralized Web Application Security Assessment Platform"
     VERSION: str = "1.0.0"
     ENVIRONMENT: Literal["development", "production", "test"] = "development"

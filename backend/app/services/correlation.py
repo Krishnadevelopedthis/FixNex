@@ -1,7 +1,7 @@
 """Finding correlation and deduplication.
 
 Several scanners routinely report the same underlying issue. Rather than
-showing the analyst three copies, PR-CAMPUS derives a stable correlation key
+showing the analyst three copies, FixNex derives a stable correlation key
 for each normalised finding and merges matches into a single finding that
 carries one source record per contributing scanner.
 

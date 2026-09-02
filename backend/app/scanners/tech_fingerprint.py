@@ -60,7 +60,7 @@ class TechFingerprintAdapter(ScannerAdapter):
     label = "Technology Fingerprinting"
     description = (
         "Identifies web server, framework, CMS and front-end libraries from headers, "
-        "cookies and markup. Built into PR-CAMPUS — always available, non-invasive."
+        "cookies and markup. Built into FixNex — always available, non-invasive."
     )
     kind = "builtin"
     profiles = (ScanProfile.LIGHT, ScanProfile.STANDARD, ScanProfile.COMPREHENSIVE)
@@ -78,7 +78,7 @@ class TechFingerprintAdapter(ScannerAdapter):
                 timeout=settings.HTTP_SCAN_TIMEOUT_SECONDS,
                 follow_redirects=True,
                 verify=False,
-                headers={"User-Agent": "PR-CAMPUS/1.0 (authorised security assessment)"},
+                headers={"User-Agent": "FixNex/1.0 (authorised security assessment)"},
             ) as client:
                 response = client.get(ctx.url)
         except Exception as exc:

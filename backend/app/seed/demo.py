@@ -402,7 +402,7 @@ def seed_demo_data(db: Session, reset: bool = True) -> dict:
         request_snippet=(
             "GET /results.php?roll_no=21CS001%27%20OR%20%271%27%3D%271 HTTP/1.1\n"
             f"Host: {DEMO_DOMAIN}\n"
-            "User-Agent: PR-CAMPUS/1.0"
+            "User-Agent: FixNex/1.0"
         ),
         response_snippet=(
             "HTTP/1.1 500 Internal Server Error\n"
@@ -748,7 +748,7 @@ def _upload_file(filename: str, content: bytes, content_type: str) -> UploadFile
 def _attach_demo_evidence(db: Session, finding: Finding, user: User, kind: str = "sqli") -> None:
     """Attach a small, clearly-labelled evidence artefact via the real service."""
     text = (
-        f"PR-CAMPUS DEMO EVIDENCE — {finding.reference}\n"
+        f"FixNex DEMO EVIDENCE — {finding.reference}\n"
         f"{'=' * 60}\n"
         f"Finding : {finding.title}\n"
         f"Target  : {finding.endpoint}\n"

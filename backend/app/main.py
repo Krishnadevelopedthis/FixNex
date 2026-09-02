@@ -1,4 +1,4 @@
-"""PR-CAMPUS API entrypoint."""
+"""FixNex API entrypoint."""
 from __future__ import annotations
 
 import logging
@@ -16,7 +16,7 @@ from app.core.middleware import RequestContextMiddleware, SecureHeadersMiddlewar
 logger = logging.getLogger("prcampus")
 
 DESCRIPTION = """
-**PR-CAMPUS** centralises the full web application security assessment lifecycle:
+**FixNex** centralises the full web application security assessment lifecycle:
 
 `Security tools → Scanner adapters → Normalised findings → Correlation →
 Verification → Evidence → CVSS / CWE / CVE → Contextual risk → Triage →
@@ -86,7 +86,7 @@ async def lifespan(app: FastAPI):
 
     yield
     runner.shutdown()
-    logger.info("PR-CAMPUS API shutting down.")
+    logger.info("FixNex API shutting down.")
 
 
 app = FastAPI(

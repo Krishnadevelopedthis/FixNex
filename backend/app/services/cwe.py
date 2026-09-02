@@ -1,6 +1,6 @@
 """MITRE CWE weakness classification.
 
-Ships an offline catalogue of the weaknesses PR-CAMPUS's adapters actually
+Ships an offline catalogue of the weaknesses FixNex's adapters actually
 emit, so classification works with no network access. Unknown identifiers are
 still accepted and linked to cwe.mitre.org.
 """

@@ -1,6 +1,6 @@
 # Architecture
 
-How PR-CAMPUS is put together, and why.
+How FixNex is put together, and why.
 
 ## Layering
 

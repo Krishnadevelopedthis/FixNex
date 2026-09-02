@@ -41,7 +41,7 @@ class SSLLabsAdapter(ScannerAdapter):
     label = "Qualys SSL Labs"
     description = (
         "Third-party TLS configuration grading. Requires the target to be publicly "
-        "reachable; PR-CAMPUS falls back to its built-in TLS adapter otherwise."
+        "reachable; FixNex falls back to its built-in TLS adapter otherwise."
     )
     kind = "external"
     requires = "outbound internet access to api.ssllabs.com and a public target"
