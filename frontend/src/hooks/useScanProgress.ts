@@ -1,6 +1,6 @@
 import * as React from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { tokenStore } from "@/services/api"
+import { apiWebSocketUrl, tokenStore } from "@/services/api"
 import type { Scan } from "@/types"
 
 /**
@@ -17,8 +17,10 @@ export function useScanProgress(scanId: number | null, enabled: boolean) {
   React.useEffect(() => {
     if (!scanId || !enabled) return
     const token = tokenStore.get()
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
-    const url = `${protocol}//${window.location.host}/api/scans/${scanId}/progress${token ? `?token=${encodeURIComponent(token)}` : ""}`
+    // Built from the configured API base, not window.location: in production
+    // the API is on a different host from the app.
+    const base = apiWebSocketUrl(`/scans/${scanId}/progress`)
+    const url = token ? `${base}?token=${encodeURIComponent(token)}` : base
 
     let socket: WebSocket | null = null
     let closedByUs = false

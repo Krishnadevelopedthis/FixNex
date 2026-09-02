@@ -3,14 +3,23 @@ import axios, { AxiosError } from "axios"
 const TOKEN_KEY = "prcampus.access_token"
 const REFRESH_KEY = "prcampus.refresh_token"
 
-// Determine API base URL based on environment
+/**
+ * Resolve the API base URL.
+ *
+ * In development this is a relative path Vite proxies. In production the API
+ * lives on another host (Render) while the app is served from Vercel, so
+ * VITE_API_URL supplies its origin.
+ *
+ * The `/api` suffix is appended when missing: every route in this client is
+ * written relative to that prefix, and pointing the variable at a bare origin
+ * is the natural mistake. Both `https://api.example.com` and
+ * `https://api.example.com/api` therefore work.
+ */
 const getApiBaseUrl = (): string => {
-  // In production (Vercel), use environment variable
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL
-  }
-  // In development, use relative path (proxied by Vite)
-  return "/api"
+  const configured = import.meta.env.VITE_API_URL
+  if (!configured) return "/api"
+  const trimmed = String(configured).replace(/\/+$/, "")
+  return /\/api$/.test(trimmed) ? trimmed : `${trimmed}/api`
 }
 
 export const tokenStore = {
@@ -26,8 +35,23 @@ export const tokenStore = {
   },
 }
 
-// Create axios instance with dynamic base URL
 const apiBaseUrl = getApiBaseUrl()
+
+/**
+ * Absolute ws:// or wss:// URL for a path under the API prefix.
+ *
+ * Deriving this from window.location would point the socket at the frontend
+ * host, where nothing is listening once the API is deployed separately.
+ */
+export function apiWebSocketUrl(path: string): string {
+  const absolute = /^https?:\/\//.test(apiBaseUrl)
+  const url = new URL(
+    absolute ? `${apiBaseUrl}${path}` : `${apiBaseUrl}${path}`,
+    window.location.origin
+  )
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:"
+  return url.toString()
+}
 export const api = axios.create({
   baseURL: apiBaseUrl,
   headers: { "Content-Type": "application/json" },
