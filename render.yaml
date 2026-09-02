@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: fixnex-backend
+    name: fixnex
     env: python
     pythonVersion: 3.11
     plan: starter
