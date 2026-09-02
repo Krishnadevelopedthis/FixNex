@@ -1,6 +1,9 @@
 /* IBM Plex — an enterprise type system with a true monospace companion, which
-   matters here: CVSS vectors, hashes, endpoints and CWE ids all need to align. */
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+   matters here: CVSS vectors, hashes, endpoints and CWE ids all need to align.
+   Space Grotesk joins it as a display face for brand moments only: its tighter
+   apertures give headlines the presence Plex Sans loses at large bold sizes,
+   without touching the interface type the product is actually read in. */
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;

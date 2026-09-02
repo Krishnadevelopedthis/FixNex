@@ -37,6 +37,8 @@ export default {
       fontFamily: {
         sans: ["'IBM Plex Sans'", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
         mono: ["'IBM Plex Mono'", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+        // Reserved for headlines and the wordmark, never for interface copy.
+        display: ["'Space Grotesk'", "'IBM Plex Sans'", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       keyframes: {
         "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },

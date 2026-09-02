@@ -70,27 +70,27 @@ export default function LoginPage() {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
             <ShieldCheck className="h-5 w-5" />
           </div>
-          <span className="text-lg font-bold tracking-tight">FixNex</span>
+          <span className="font-display text-xl font-bold tracking-[-0.02em]">FixNex</span>
         </div>
 
         <div className="relative max-w-md space-y-5">
           {/* Each line settles in turn, so the panel reads top to bottom rather
               than arriving as one block. Delays are staggered per element. */}
           <h1
-            className="reveal text-3xl font-bold leading-tight tracking-tight"
+            className="reveal text-balance font-display text-[2.5rem] font-bold leading-[1.08] tracking-[-0.03em]"
             style={{ animationDelay: "80ms" }}
           >
             One platform for the whole security assessment lifecycle.
           </h1>
           <p
-            className="reveal text-sm leading-relaxed text-primary-foreground/85"
+            className="reveal max-w-[38ch] text-pretty text-[0.95rem] leading-[1.7] text-primary-foreground/80"
             style={{ animationDelay: "260ms" }}
           >
             Reconnaissance, scanning, manual verification, evidence, CVSS and contextual
             risk, remediation, retesting, audit and reporting — centralized instead of
             scattered across disconnected tools.
           </p>
-          <div className="space-y-2.5 pt-2 text-sm">
+          <div className="space-y-3 pt-3 text-[0.9rem]">
             {[
               "Scanner adapters normalize every tool into one finding format",
               "Correlation merges duplicate findings across scanners",
@@ -103,14 +103,17 @@ export default function LoginPage() {
                 style={{ animationDelay: `${440 + index * 140}ms` }}
               >
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary-foreground/70" />
-                <span className="text-primary-foreground/85">{line}</span>
+                <span className="leading-relaxed text-primary-foreground/80">{line}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="reveal relative text-xs text-primary-foreground/60" style={{ animationDelay: "1000ms" }}>
-          For authorized security testing only.
+        <p
+          className="reveal relative text-[11px] font-medium uppercase tracking-[0.16em] text-primary-foreground/55"
+          style={{ animationDelay: "1000ms" }}
+        >
+          For authorized security testing only
         </p>
       </div>
 
@@ -122,13 +125,13 @@ export default function LoginPage() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <ShieldCheck className="h-5 w-5" />
               </div>
-              <span className="text-lg font-bold tracking-tight">FixNex</span>
+              <span className="font-display text-xl font-bold tracking-[-0.02em]">FixNex</span>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <h2 className="text-2xl font-semibold tracking-tight">Sign in</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="font-display text-[1.75rem] font-bold tracking-[-0.02em]">Sign in</h2>
+            <p className="text-[0.9rem] leading-relaxed text-muted-foreground">
               Use your FixNex account to continue.
             </p>
           </div>
@@ -204,12 +207,12 @@ export default function LoginPage() {
                   className="group flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-left transition-colors hover:border-primary/40 hover:bg-accent"
                 >
                   <span className="min-w-0">
-                    <span className="block text-xs font-medium">{account.role}</span>
-                    <span className="block truncate text-[11px] text-muted-foreground">
+                    <span className="block text-[13px] font-semibold tracking-[-0.01em]">{account.role}</span>
+                    <span className="block truncate text-[11.5px] leading-snug text-muted-foreground">
                       {account.note}
                     </span>
                   </span>
-                  <span className="shrink-0 font-mono text-[10px] text-muted-foreground group-hover:text-primary">
+                  <span className="shrink-0 font-mono text-[11px] tracking-tight text-muted-foreground group-hover:text-primary">
                     {account.email.split("@")[0]}
                   </span>
                 </button>
