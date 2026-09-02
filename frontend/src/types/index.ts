@@ -537,3 +537,46 @@ export interface AttackPathResponse {
   }
   disclaimer: string
 }
+
+/* -------------------------------------------------------------- compliance */
+export interface ComplianceControl {
+  id: string
+  title: string
+  open_findings: number
+  resolved_findings: number
+  worst_open_severity?: string | null
+  readiness: number
+  finding_ids: number[]
+}
+
+export interface ComplianceFramework {
+  key: string
+  label: string
+  controls_affected: number
+  controls_at_risk: number
+  readiness?: number | null
+  controls: ComplianceControl[]
+}
+
+export interface OwaspCategory {
+  id: string
+  title: string
+  open_findings: number
+  resolved_findings: number
+  worst_open_severity?: string | null
+}
+
+export interface ComplianceResponse {
+  assessment_id: number
+  frameworks: ComplianceFramework[]
+  owasp_top_10: OwaspCategory[]
+  coverage: {
+    findings_considered: number
+    findings_mapped: number
+    findings_unmapped: number
+    mapping_rate: number
+    unmapped_cwes: string[]
+    catalogue_size: number
+  }
+  disclaimer: string
+}

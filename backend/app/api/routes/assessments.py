@@ -17,6 +17,7 @@ from app.models.enums import AssessmentStatus
 from app.models.target import ScopeRule
 from app.schemas.assessments import (
     AttackPathResponse,
+    ComplianceResponse,
     AssessmentCreate,
     AssessmentListItem,
     AssessmentRead,
@@ -30,6 +31,7 @@ from app.schemas.assessments import (
 from app.schemas.common import MessageResponse, Page
 from app.schemas.targets import TargetCreate, TargetRead
 from app.services import attack_paths as attack_path_service
+from app.services import compliance as compliance_service
 from app.services import assessments as service
 from app.services import scope as scope_service
 from app.services import targets as target_service
@@ -258,3 +260,19 @@ def attack_paths(assessment_id: int, db: DbSession, user: CurrentUser) -> Attack
     """
     require_assessment_access(db, user, assessment_id)
     return AttackPathResponse(**attack_path_service.build_attack_paths(db, assessment_id))
+
+
+@router.get(
+    "/{assessment_id}/compliance",
+    response_model=ComplianceResponse,
+    dependencies=[Depends(require_permission(Permission.FINDING_VIEW))],
+    summary="Control-framework readiness derived from this assessment's findings",
+)
+def compliance(assessment_id: int, db: DbSession, user: CurrentUser) -> ComplianceResponse:
+    """Map findings onto OWASP Top 10, NIST SP 800-53 and ISO/IEC 27001 controls.
+
+    Readiness reflects only the controls that findings in this assessment touch;
+    controls with no evidence either way are not scored.
+    """
+    require_assessment_access(db, user, assessment_id)
+    return ComplianceResponse(**compliance_service.build_compliance(db, assessment_id))

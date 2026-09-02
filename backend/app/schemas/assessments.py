@@ -202,3 +202,47 @@ class AttackPathResponse(BaseModel):
         "same surface. They indicate where to look first; they are not proof that the "
         "chain is exploitable end to end."
     )
+
+
+class ComplianceControl(BaseModel):
+    id: str
+    title: str
+    open_findings: int = 0
+    resolved_findings: int = 0
+    worst_open_severity: str | None = None
+    readiness: float = 100.0
+    finding_ids: list[int] = Field(default_factory=list)
+
+
+class ComplianceFramework(BaseModel):
+    key: str
+    label: str
+    controls_affected: int = 0
+    controls_at_risk: int = 0
+    readiness: float | None = None
+    controls: list[ComplianceControl] = Field(default_factory=list)
+
+
+class OwaspCategory(BaseModel):
+    id: str
+    title: str
+    open_findings: int = 0
+    resolved_findings: int = 0
+    worst_open_severity: str | None = None
+
+
+class ComplianceCoverage(BaseModel):
+    findings_considered: int = 0
+    findings_mapped: int = 0
+    findings_unmapped: int = 0
+    mapping_rate: float = 0.0
+    unmapped_cwes: list[str] = Field(default_factory=list)
+    catalogue_size: int = 0
+
+
+class ComplianceResponse(BaseModel):
+    assessment_id: int
+    frameworks: list[ComplianceFramework] = Field(default_factory=list)
+    owasp_top_10: list[OwaspCategory] = Field(default_factory=list)
+    coverage: ComplianceCoverage
+    disclaimer: str

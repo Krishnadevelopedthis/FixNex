@@ -22,6 +22,7 @@ import { NewScanDialog } from "@/components/scan-dialogs"
 import { AddTargetDialog } from "@/components/target-dialogs"
 import { GenerateReportDialog } from "@/components/report-dialogs"
 import { AttackPathPanel } from "@/components/attack-path-graph"
+import { CompliancePanel } from "@/components/compliance-panel"
 import { SEVERITY_DOT } from "@/lib/severity"
 import { cn, formatDate, relativeTime, titleCase } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
@@ -299,6 +300,11 @@ export default function AssessmentDetailPage() {
     queryFn: () => assessmentApi.attackPaths(assessmentId),
     enabled: Number.isFinite(assessmentId),
   })
+  const { data: compliance } = useQuery({
+    queryKey: ["compliance", assessmentId],
+    queryFn: () => assessmentApi.compliance(assessmentId),
+    enabled: Number.isFinite(assessmentId),
+  })
   const { data: activity } = useQuery({
     queryKey: ["audit", { assessment_id: assessmentId }],
     queryFn: () => auditApi.list({ assessment_id: assessmentId, page_size: 50 }),
@@ -465,6 +471,8 @@ export default function AssessmentDetailPage() {
                   </CardContent>
                 </Card>
               )}
+
+              {compliance && <CompliancePanel data={compliance} />}
 
               <Card>
                 <CardHeader><CardTitle>Team</CardTitle></CardHeader>
