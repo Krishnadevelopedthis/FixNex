@@ -54,3 +54,27 @@ def check_database() -> tuple[bool, str]:
         return True, "connected"
     except Exception as exc:  # pragma: no cover - surfaced on the system health page
         return False, f"{type(exc).__name__}: {exc}"[:200]
+
+
+def run_migrations() -> tuple[bool, str]:
+    """Apply Alembic migrations to head.
+
+    Used at startup on hosts that offer no release phase or shell (Render's
+    free tier), where the schema would otherwise never be created. Returns
+    (ok, detail) rather than raising: a failure here should be loud in the
+    logs but must not stop the process from booting, or the operator loses
+    /health and /api/docs and has no way to diagnose it.
+    """
+    from alembic import command
+    from alembic.config import Config
+
+    from app.core.config import BACKEND_ROOT
+
+    try:
+        config = Config(str(BACKEND_ROOT / "alembic.ini"))
+        config.set_main_option("script_location", str(BACKEND_ROOT / "migrations"))
+        config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+        command.upgrade(config, "head")
+        return True, "schema is at head"
+    except Exception as exc:
+        return False, f"{type(exc).__name__}: {exc}"[:300]

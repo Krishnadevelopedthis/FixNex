@@ -54,6 +54,11 @@ services:
         value: "false"
       - key: PYTHONUNBUFFERED
         value: "1"
+      # Render's free tier offers no shell and no pre-deploy hook, so the
+      # schema is created as the app boots instead. Harmless when already at
+      # head. On a paid plan, prefer preDeployCommand and set this to false.
+      - key: RUN_MIGRATIONS_ON_STARTUP
+        value: "true"
       # Optional: enables AI triage suggestions. Left unset, the feature reports
       # itself unavailable on the System Health page and nothing else changes.
       - key: ANTHROPIC_API_KEY

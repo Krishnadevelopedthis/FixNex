@@ -38,6 +38,17 @@ async def lifespan(app: FastAPI):
     ok, detail = check_database()
     logger.info("Database: %s (%s)", "connected" if ok else "UNAVAILABLE", detail)
 
+    if ok and settings.RUN_MIGRATIONS_ON_STARTUP:
+        from app.db.session import run_migrations
+
+        migrated, migration_detail = run_migrations()
+        if migrated:
+            logger.info("Migrations applied on startup: %s", migration_detail)
+        else:
+            # Loud, but not fatal: the operator still needs /health and
+            # /api/docs to work out what went wrong.
+            logger.error("Startup migration FAILED: %s", migration_detail)
+
     storage = get_storage()
     logger.info("Evidence storage backend: %s", storage.name)
 

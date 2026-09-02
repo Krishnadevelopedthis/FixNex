@@ -119,6 +119,12 @@ class Settings(BaseSettings):
     AI_TRIAGE_TIMEOUT_SECONDS: int = 60
     AI_TRIAGE_CACHE_HOURS: int = 168
 
+    # ------------------------------------------------- migrations on startup
+    # For hosts with no release phase or shell access (Render's free tier),
+    # apply migrations as the app boots. Off by default: where a proper
+    # pre-deploy hook exists, that is the better place to run them.
+    RUN_MIGRATIONS_ON_STARTUP: bool = False
+
     # ------------------------------------------------------------ demo mode
     DEMO_MODE: bool = True
     SEED_ON_STARTUP: bool = False
