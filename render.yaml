@@ -59,6 +59,12 @@ services:
       # head. On a paid plan, prefer preDeployCommand and set this to false.
       - key: RUN_MIGRATIONS_ON_STARTUP
         value: "true"
+      # Loads the labelled demo dataset the first time the database is empty,
+      # so the deployment is usable without shell access. It skips silently
+      # once any assessment exists, so real data is never overwritten. Set to
+      # false once the platform holds work you care about.
+      - key: SEED_ON_STARTUP
+        value: "true"
       # Optional: enables AI triage suggestions. Left unset, the feature reports
       # itself unavailable on the System Health page and nothing else changes.
       - key: ANTHROPIC_API_KEY

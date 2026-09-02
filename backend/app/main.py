@@ -37,6 +37,7 @@ async def lifespan(app: FastAPI):
 
     ok, detail = check_database()
     logger.info("Database: %s (%s)", "connected" if ok else "UNAVAILABLE", detail)
+    schema_ready = ok
 
     if ok and settings.RUN_MIGRATIONS_ON_STARTUP:
         from app.db.session import run_migrations
@@ -48,6 +49,7 @@ async def lifespan(app: FastAPI):
             # Loud, but not fatal: the operator still needs /health and
             # /api/docs to work out what went wrong.
             logger.error("Startup migration FAILED: %s", migration_detail)
+            schema_ready = False
 
     storage = get_storage()
     logger.info("Evidence storage backend: %s", storage.name)
@@ -60,17 +62,27 @@ async def lifespan(app: FastAPI):
 
     # A scan running in this process cannot survive a restart; without this the
     # row stays RUNNING for ever and its progress socket never terminates.
-    if ok:
+    if schema_ready:
         from app.services.scanning import reconcile_orphaned_jobs
 
-        orphaned = reconcile_orphaned_jobs()
-        if orphaned:
-            logger.warning("Marked %d interrupted scan(s) as failed on startup.", orphaned)
+        try:
+            orphaned = reconcile_orphaned_jobs()
+            if orphaned:
+                logger.warning("Marked %d interrupted scan(s) as failed on startup.", orphaned)
+        except Exception as exc:
+            # A missing or half-built schema must not stop the app from
+            # starting, or there is no /health left to diagnose it with.
+            logger.error("Could not reconcile interrupted scans: %s", exc)
 
-    if settings.SEED_ON_STARTUP:
+    if schema_ready and settings.SEED_ON_STARTUP:
         from app.seed.demo import seed_if_empty
 
-        seed_if_empty()
+        try:
+            summary = seed_if_empty()
+            if summary:
+                logger.info("Seeded demonstration data on startup: %s", summary)
+        except Exception as exc:
+            logger.error("Startup demo seeding FAILED: %s", exc)
 
     yield
     runner.shutdown()
