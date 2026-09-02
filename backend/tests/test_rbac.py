@@ -105,3 +105,56 @@ def test_admin_can_manage_users_but_engineer_cannot(client, auth):
     }
     assert client.post("/api/users", headers=auth(Role.SECURITY_ENGINEER), json=payload).status_code == 403
     assert client.post("/api/users", headers=auth(Role.ADMIN), json=payload).status_code == 201
+
+
+# --------------------------------------------------------- user administration
+def test_deactivated_users_are_hidden_from_pickers_by_default(client, auth, users):
+    """Assignment pickers should not offer accounts that can no longer sign in."""
+    target = users[Role.ANALYST]
+    client.patch(f"/api/users/{target.id}", headers=auth(Role.ADMIN), json={"is_active": False})
+
+    listed = client.get("/api/users", headers=auth(Role.ADMIN)).json()
+    assert target.id not in [u["id"] for u in listed]
+
+
+def test_deactivated_users_are_still_reachable_for_administration(client, auth, users):
+    """Regression: deactivating a user made them vanish with no way back.
+
+    The admin screen listed users with the active-only default, so clicking
+    deactivate removed the row and left no control to reactivate it - the
+    account was stranded.
+    """
+    target = users[Role.ANALYST]
+    client.patch(f"/api/users/{target.id}", headers=auth(Role.ADMIN), json={"is_active": False})
+
+    listed = client.get(
+        "/api/users", headers=auth(Role.ADMIN), params={"active_only": False}
+    ).json()
+    row = next((u for u in listed if u["id"] == target.id), None)
+    assert row is not None, "administration must be able to see a deactivated account"
+    assert row["is_active"] is False
+
+
+def test_a_deactivated_user_can_be_reactivated(client, auth, users):
+    target = users[Role.ANALYST]
+    client.patch(f"/api/users/{target.id}", headers=auth(Role.ADMIN), json={"is_active": False})
+
+    response = client.patch(
+        f"/api/users/{target.id}", headers=auth(Role.ADMIN), json={"is_active": True}
+    )
+    assert response.status_code == 200
+
+    listed = client.get("/api/users", headers=auth(Role.ADMIN)).json()
+    assert target.id in [u["id"] for u in listed]
+
+
+def test_a_deactivated_user_cannot_sign_in(client, auth, users):
+    from tests.conftest import TEST_PASSWORD
+
+    target = users[Role.ANALYST]
+    client.patch(f"/api/users/{target.id}", headers=auth(Role.ADMIN), json={"is_active": False})
+
+    response = client.post(
+        "/api/auth/login", json={"email": target.email, "password": TEST_PASSWORD}
+    )
+    assert response.status_code == 401

@@ -228,7 +228,7 @@ export function AssignDialog({ finding, open, onOpenChange }: {
   const { toast } = useToast()
   const invalidate = useFindingInvalidation(finding.id)
 
-  const { data: users } = useQuery({ queryKey: ["users", "picker"], queryFn: userApi.list, enabled: open })
+  const { data: users } = useQuery({ queryKey: ["users", "picker"], queryFn: () => userApi.list(true), enabled: open })
 
   React.useEffect(() => {
     if (open) {

@@ -180,7 +180,10 @@ export const auditApi = {
 }
 
 export const userApi = {
-  list: () => api.get<CurrentUser[]>("/users").then((r) => r.data),
+  /** Active users only by default — assignment pickers should not offer
+   *  deactivated accounts. Administration passes activeOnly: false. */
+  list: (activeOnly = true) =>
+    api.get<CurrentUser[]>("/users", { params: { active_only: activeOnly } }).then((r) => r.data),
   create: (payload: Record<string, unknown>) => api.post("/users", payload).then((r) => r.data),
   update: (id: number, payload: Record<string, unknown>) =>
     api.patch(`/users/${id}`, payload).then((r) => r.data),

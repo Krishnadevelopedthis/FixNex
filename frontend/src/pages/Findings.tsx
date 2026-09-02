@@ -88,7 +88,7 @@ export default function FindingsPage() {
   const { data: scanners } = useQuery({ queryKey: ["scanners"], queryFn: scanApi.scanners })
   const { data: users } = useQuery({
     queryKey: ["users", "picker"],
-    queryFn: userApi.list,
+    queryFn: () => userApi.list(false),
     enabled: can("user:view") || can("finding:assign"),
   })
 

@@ -29,7 +29,7 @@ export default function UsersPage() {
   const [deleting, setDeleting] = React.useState<{ id: number; name: string } | null>(null)
   const [form, setForm] = React.useState({ email: "", full_name: "", password: "", role: "VIEWER", job_title: "" })
 
-  const { data, isLoading, error, refetch } = useQuery({ queryKey: ["users"], queryFn: userApi.list })
+  const { data, isLoading, error, refetch } = useQuery({ queryKey: ["users", "all"], queryFn: () => userApi.list(false) })
 
   React.useEffect(() => {
     if (createOpen) setForm({ email: "", full_name: "", password: "", role: "VIEWER", job_title: "" })
@@ -98,7 +98,7 @@ export default function UsersPage() {
             </THead>
             <TBody>
               {data.map((account) => (
-                <TR key={account.id}>
+                <TR key={account.id} className={account.is_active ? undefined : "opacity-60"}>
                   <TD>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{account.full_name}</span>
@@ -125,18 +125,21 @@ export default function UsersPage() {
                     )}
                   </TD>
                   <TD>
-                    {can("user:update") && account.id !== me?.id ? (
-                      <button
-                        onClick={() => activeMutation.mutate({ id: account.id, is_active: !account.is_active })}
-                        className="text-xs font-medium text-primary hover:underline"
-                      >
-                        {account.is_active ? "Active" : "Deactivated"}
-                      </button>
-                    ) : (
+                    <div className="flex items-center gap-2">
                       <Badge variant={account.is_active ? "default" : "muted"}>
                         {account.is_active ? "Active" : "Deactivated"}
                       </Badge>
-                    )}
+                      {can("user:update") && account.id !== me?.id && (
+                        <button
+                          onClick={() =>
+                            activeMutation.mutate({ id: account.id, is_active: !account.is_active })
+                          }
+                          className="text-[11px] font-medium text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
+                        >
+                          {account.is_active ? "Deactivate" : "Reactivate"}
+                        </button>
+                      )}
+                    </div>
                   </TD>
                   <TD className="text-xs text-muted-foreground">
                     {account.last_login_at ? relativeTime(account.last_login_at) : "Never"}
