@@ -17,11 +17,14 @@ Security tools → Scanner adapters → Normalized findings → Correlation
    → Triage → Remediation → Retest → Closure → Audit trail → Report
 ```
 
+![FixNex dashboard](docs/screenshots/dashboard.png)
+
 ---
 
 ## Contents
 
 - [What it does](#what-it-does)
+- [Screenshots](#screenshots)
 - [Architecture](#architecture)
 - [Technology stack](#technology-stack)
 - [Quick start (Docker)](#quick-start-docker)
@@ -60,6 +63,45 @@ Security tools → Scanner adapters → Normalized findings → Correlation
 | **Compliance rollup** | Findings map to OWASP Top 10 and to NIST SP 800-53 / ISO 27001 controls, with per-control readiness |
 | **Posture scoring** | One 0-100 score per assessment, always shown with the deductions that produced it |
 | **AI triage (optional)** | A false-positive likelihood, reasoning and suggested fix, surfaced beside the analyst's own verify action — never applied automatically |
+
+---
+
+## Screenshots
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/finding-detail.png" alt="Finding detail"></td>
+<td width="50%"><img src="docs/screenshots/findings.png" alt="Findings"></td>
+</tr>
+<tr>
+<td><b>Finding detail.</b> CVSS base score and the separate contextual risk shown side by
+side, with the platform score explicitly labelled as such. CWE classification, workflow
+state, SLA, and provenance that names the finding as seeded demo data rather than a real
+scan result.</td>
+<td><b>Findings.</b> Searchable and filterable across every assessment. The source column
+shows which scanner reported each finding, with a <code>+n</code> where correlation merged
+several tools into one record.</td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/attack-paths.png" alt="Attack paths"></td>
+<td width="50%"><img src="docs/screenshots/system-health.png" alt="System health"></td>
+</tr>
+<tr>
+<td><b>Attack paths.</b> Chains where one finding makes another materially more dangerous,
+laid out prerequisite → enabler → outcome. Every edge carries a written rationale.</td>
+<td><b>System health.</b> Every optional dependency reports itself honestly. A missing
+scanner names its fallback rather than presenting as a failure.</td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/login.png" alt="Sign in"></td>
+<td width="50%"><img src="docs/screenshots/dashboard-dark.png" alt="Dark theme"></td>
+</tr>
+<tr>
+<td><b>Sign in.</b> Six demo roles, each seeing a different slice of the platform.</td>
+<td><b>Dark theme.</b> The same hue family taken to a deep slate-teal, so both themes read
+as one product.</td>
+</tr>
+</table>
 
 ---
 
@@ -435,7 +477,7 @@ cd backend
 ../.venv/bin/python -m pytest tests/ --cov=app --cov-report=term
 ```
 
-**288 tests.** The suite runs against a throwaway SQLite database and
+**354 tests.** The suite runs against a throwaway SQLite database and
 needs no external services.
 
 | Area | Covers |
@@ -454,6 +496,8 @@ needs no external services.
 | `test_compliance.py` | Mapping-table integrity, readiness maths, framework rollup |
 | `test_posture.py` | Score factors and caps, grade consistency, asset heatmap |
 | `test_ai_triage.py` | Availability degradation, caching, and that suggestions never mutate state |
+| `test_api_contract.py` | Response shape of every collection endpoint, and pagination bounds |
+| `test_restart_recovery.py` | Scans orphaned by a restart are failed, not left running for ever |
 
 ---
 
