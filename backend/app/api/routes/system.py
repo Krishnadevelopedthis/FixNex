@@ -17,6 +17,21 @@ from app.storage import get_storage
 router = APIRouter(prefix="/system", tags=["System"])
 
 
+def _celery_workers() -> int:
+    """How many Celery workers are consuming the queue.
+
+    Returns -1 when it cannot be determined, so an inconclusive probe is not
+    mistaken for "no workers".
+    """
+    try:
+        from app.workers.celery_app import celery_app
+
+        replies = celery_app.control.ping(timeout=1.5) or []
+        return len(replies)
+    except Exception:
+        return -1
+
+
 @router.get(
     "/health",
     response_model=SystemHealthResponse,
@@ -56,19 +71,39 @@ def system_health(db: DbSession, user: CurrentUser) -> SystemHealthResponse:
         )
     )
 
+    # Redis is this platform's Celery broker - it is not used as a cache. A
+    # reachable broker with no worker consuming it is worse than no broker at
+    # all: the runner switches to Celery and every scan queues for ever, so the
+    # worker is checked too and reported as the actual problem.
     if settings.REDIS_URL:
         try:
             import redis
 
             redis.Redis.from_url(settings.REDIS_URL, socket_connect_timeout=2).ping()
-            redis_ok, redis_detail = True, f"Reachable at {settings.REDIS_URL}"
+            redis_ok, redis_detail = True, f"Broker reachable at {settings.REDIS_URL}"
         except Exception as exc:
             redis_ok, redis_detail = False, f"{type(exc).__name__}: {exc}"[:160]
     else:
-        redis_ok, redis_detail = False, "REDIS_URL is not configured; the in-process runner is used."
+        redis_ok, redis_detail = False, (
+            "REDIS_URL is not configured, so scans run on the in-process thread "
+            "runner. That is a supported configuration, not a fault."
+        )
+
+    if redis_ok:
+        workers = _celery_workers()
+        if workers == 0:
+            redis_ok = False
+            redis_detail = (
+                f"The broker at {settings.REDIS_URL} is reachable but no Celery worker is "
+                "consuming it. Start a worker (celery -A app.workers.celery_app.celery_app "
+                "worker) or set TASK_RUNNER=thread, otherwise queued scans will never run."
+            )
+        elif workers > 0:
+            redis_detail = f"{redis_detail}; {workers} worker(s) consuming the queue"
+
     components.append(
         ComponentHealth(
-            name="redis", label="Redis", kind="cache",
+            name="redis", label="Redis (Celery broker)", kind="queue",
             available=redis_ok, detail=redis_detail, required=False,
         )
     )

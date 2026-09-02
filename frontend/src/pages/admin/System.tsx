@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import {
-  CheckCircle2, Database, HardDrive, Radar, RefreshCw, Server, XCircle, Zap,
+  CheckCircle2, Database, HardDrive, Radar, RefreshCw, Server, Sparkles, XCircle, Zap,
 } from "lucide-react"
 import { scanApi, systemApi } from "@/services/endpoints"
 import { PageHeader } from "@/layouts/AppLayout"
@@ -11,7 +11,8 @@ import { ErrorState, Skeleton } from "@/components/ui/misc"
 import { cn } from "@/lib/utils"
 
 const KIND_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  database: Database, cache: Zap, storage: HardDrive, scanner: Radar, worker: Server,
+  database: Database, cache: Zap, queue: Zap, storage: HardDrive,
+  scanner: Radar, worker: Server, enrichment: Sparkles,
 }
 
 export default function SystemPage() {
