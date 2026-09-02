@@ -132,3 +132,73 @@ class ScopeCheckResponse(BaseModel):
     in_scope: bool
     matched_rule: ScopeRuleRead | None = None
     reason: str
+
+
+class AttackPathNode(BaseModel):
+    id: str
+    kind: str                      # "finding" | "outcome"
+    title: str
+    severity: str
+    finding_id: int | None = None
+    reference: str | None = None
+    category: str | None = None
+    cwe_id: str | None = None
+    status: str | None = None
+    endpoint: str | None = None
+    target_id: int | None = None
+    target_name: str | None = None
+    rule_id: str | None = None
+    rule_name: str | None = None
+    rationale: str | None = None
+
+
+class AttackPathEdge(BaseModel):
+    id: str
+    source: str
+    target: str
+    role: str                      # "prerequisite" | "enabler"
+    rule_id: str
+    label: str
+
+
+class AttackPathStep(BaseModel):
+    finding_id: int
+    reference: str
+    title: str
+    severity: str
+
+
+class AttackPath(BaseModel):
+    rule_id: str
+    rule_name: str
+    outcome: str
+    outcome_severity: str
+    rationale: str
+    target_id: int | None = None
+    target_name: str | None = None
+    prerequisite: AttackPathStep
+    enabler: AttackPathStep
+    same_surface: bool = False
+    escalates: bool
+
+
+class AttackPathSummary(BaseModel):
+    paths: int = 0
+    escalating_paths: int = 0
+    findings_considered: int = 0
+    findings_in_paths: int = 0
+    highest_outcome_severity: str | None = None
+    rules_evaluated: int = 0
+
+
+class AttackPathResponse(BaseModel):
+    assessment_id: int
+    nodes: list[AttackPathNode] = Field(default_factory=list)
+    edges: list[AttackPathEdge] = Field(default_factory=list)
+    paths: list[AttackPath] = Field(default_factory=list)
+    summary: AttackPathSummary
+    disclaimer: str = (
+        "Attack paths are potential chains inferred from findings that co-occur on the "
+        "same surface. They indicate where to look first; they are not proof that the "
+        "chain is exploitable end to end."
+    )

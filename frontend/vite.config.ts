@@ -22,6 +22,9 @@ export default defineConfig({
       output: {
         manualChunks(id: string) {
           if (!id.includes("node_modules")) return
+          // Checked before the React rule: the package path "@xyflow/react"
+          // would otherwise be swept into the React chunk.
+          if (id.includes("@xyflow")) return "flow"
           if (id.includes("recharts") || id.includes("d3-")) return "charts"
           if (id.includes("react-router") || id.includes("/react-dom/") || id.includes("/react/")) return "react"
           if (id.includes("@tanstack") || id.includes("axios")) return "query"

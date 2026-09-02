@@ -5,11 +5,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Request, status
 from fastapi.responses import Response
 
-from app.api.deps import CurrentUser, DbSession, require_assessment_access, require_permission
+from app.api.deps import CurrentUser, DbSession, Pagination, require_assessment_access, require_permission
 from app.core.exceptions import ConflictError, NotFoundError
 from app.core.permissions import Permission
 from app.models.enums import ReportStatus
 from app.models.report import Report
+from app.schemas.common import Page
 from app.schemas.reports import ReportCreate, ReportRead
 from app.services import reports as service
 
@@ -33,20 +34,32 @@ def create_report(
 
 @router.get(
     "",
-    response_model=list[ReportRead],
+    response_model=Page[ReportRead],
     dependencies=[Depends(require_permission(Permission.REPORT_VIEW))],
     summary="List generated reports",
 )
 def list_reports(
     db: DbSession,
     user: CurrentUser,
+    pagination: Pagination,
     assessment_id: Annotated[int | None, Query()] = None,
-) -> list[ReportRead]:
+) -> Page[ReportRead]:
+    """Paginated to match every other collection endpoint on this API."""
     query = db.query(Report)
     if assessment_id:
         require_assessment_access(db, user, assessment_id)
         query = query.filter(Report.assessment_id == assessment_id)
-    return [service.to_read(r) for r in query.order_by(Report.created_at.desc()).limit(100).all()]
+
+    total = query.count()
+    rows = (
+        query.order_by(Report.created_at.desc())
+        .offset(pagination.offset)
+        .limit(pagination.page_size)
+        .all()
+    )
+    return Page.build(
+        [service.to_read(r) for r in rows], total, pagination.page, pagination.page_size
+    )
 
 
 @router.get(

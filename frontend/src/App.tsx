@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom"
 import { Loader2, ShieldAlert } from "lucide-react"
 import { AppLayout } from "@/layouts/AppLayout"
+import { ErrorBoundary } from "@/components/error-boundary"
 import { useAuth } from "@/hooks/useAuth"
 import { Button } from "@/components/ui/button"
 
@@ -67,7 +68,9 @@ export default function App() {
       <Route
         element={
           <RequireAuth>
-            <AppLayout />
+            <ErrorBoundary>
+              <AppLayout />
+            </ErrorBoundary>
           </RequireAuth>
         }
       >

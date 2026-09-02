@@ -1,6 +1,6 @@
 import { api } from "./api"
 import type {
-  Assessment, Asset, AuditLog, CurrentUser, Dashboard, Evidence, Finding, FindingDetail,
+  Assessment, Asset, AttackPathResponse, AuditLog, CurrentUser, Dashboard, Evidence, Finding, FindingDetail,
   Page, Remediation, Report, Retest, RoleInfo, Scan, ScannerInfo, ScanProfileInfo,
   ScopeRule, SystemHealth, Target, TokenResponse,
 } from "@/types"
@@ -44,6 +44,8 @@ export const assessmentApi = {
     ).then((r) => r.data),
 
   targets: (id: number) => api.get<Target[]>(`/assessments/${id}/targets`).then((r) => r.data),
+  attackPaths: (id: number) =>
+    api.get<AttackPathResponse>(`/assessments/${id}/attack-paths`).then((r) => r.data),
   addTarget: (id: number, payload: Record<string, unknown>) =>
     api.post<Target>(`/assessments/${id}/targets`, payload).then((r) => r.data),
 }

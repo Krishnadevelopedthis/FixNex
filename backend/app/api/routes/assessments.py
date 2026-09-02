@@ -16,6 +16,7 @@ from app.models.assessment import Assessment
 from app.models.enums import AssessmentStatus
 from app.models.target import ScopeRule
 from app.schemas.assessments import (
+    AttackPathResponse,
     AssessmentCreate,
     AssessmentListItem,
     AssessmentRead,
@@ -28,6 +29,7 @@ from app.schemas.assessments import (
 )
 from app.schemas.common import MessageResponse, Page
 from app.schemas.targets import TargetCreate, TargetRead
+from app.services import attack_paths as attack_path_service
 from app.services import assessments as service
 from app.services import scope as scope_service
 from app.services import targets as target_service
@@ -240,3 +242,19 @@ def add_target(
     assessment = require_assessment_access(db, user, assessment_id)
     target = target_service.create_target(db, user, assessment, payload, request)
     return target_service.to_read(db, target)
+
+
+@router.get(
+    "/{assessment_id}/attack-paths",
+    response_model=AttackPathResponse,
+    dependencies=[Depends(require_permission(Permission.FINDING_VIEW))],
+    summary="Potential attack chains among this assessment's findings",
+)
+def attack_paths(assessment_id: int, db: DbSession, user: CurrentUser) -> AttackPathResponse:
+    """Chains where one finding makes another materially more dangerous.
+
+    Only live findings are considered — a closed, suppressed or false-positive
+    finding is not a foothold.
+    """
+    require_assessment_access(db, user, assessment_id)
+    return AttackPathResponse(**attack_path_service.build_attack_paths(db, assessment_id))

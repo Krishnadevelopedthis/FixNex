@@ -108,3 +108,51 @@ def test_report_generation_is_audited(client, auth, assessment, finding):
         "/api/audit-logs", headers=auth(Role.ADMIN), params={"page_size": 100}
     ).json()
     assert any(entry["action"] == "report.generated" for entry in logs["items"])
+
+
+def test_report_list_is_paginated_like_every_other_collection(client, auth, assessment, finding):
+    """Regression: this endpoint returned a bare list while the client expected a page.
+
+    An empty list is truthy in JavaScript, so `reports.items.length` threw and
+    unmounted the whole assessment screen.
+    """
+    client.post(
+        "/api/reports",
+        headers=auth(Role.SECURITY_LEAD),
+        json={"assessment_id": assessment.id, "format": "JSON"},
+    )
+    response = client.get(
+        "/api/reports", headers=auth(Role.VIEWER), params={"assessment_id": assessment.id}
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert isinstance(body, dict), "the list endpoint must return a page object, not a bare list"
+    assert set(body) >= {"items", "total", "page", "page_size", "pages"}
+    assert isinstance(body["items"], list)
+    assert body["total"] >= 1
+
+
+def test_report_list_is_paginated_when_empty(client, auth, assessment):
+    response = client.get(
+        "/api/reports", headers=auth(Role.VIEWER), params={"assessment_id": assessment.id}
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["items"] == [] and body["total"] == 0 and body["pages"] == 1
+
+
+def test_report_list_respects_page_size(client, auth, assessment, finding):
+    for _ in range(3):
+        client.post(
+            "/api/reports",
+            headers=auth(Role.SECURITY_LEAD),
+            json={"assessment_id": assessment.id, "format": "JSON"},
+        )
+    response = client.get(
+        "/api/reports",
+        headers=auth(Role.VIEWER),
+        params={"assessment_id": assessment.id, "page_size": 2},
+    )
+    body = response.json()
+    assert len(body["items"]) == 2
+    assert body["total"] == 3 and body["pages"] == 2

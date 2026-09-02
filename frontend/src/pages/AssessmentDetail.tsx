@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   AlertTriangle, ArrowLeft, Bug, CheckCircle2, ChevronRight, CircleSlash, Crosshair,
-  FileText, Plus, Radar, ShieldCheck, Trash2,
+  FileText, Plus, Radar, ShieldCheck, Trash2, Waypoints,
 } from "lucide-react"
 import { assessmentApi, findingApi, reportApi, scanApi, auditApi } from "@/services/endpoints"
 import { PageHeader } from "@/layouts/AppLayout"
@@ -21,6 +21,7 @@ import { errorMessage, useToast } from "@/components/ui/toast"
 import { NewScanDialog } from "@/components/scan-dialogs"
 import { AddTargetDialog } from "@/components/target-dialogs"
 import { GenerateReportDialog } from "@/components/report-dialogs"
+import { AttackPathPanel } from "@/components/attack-path-graph"
 import { SEVERITY_DOT } from "@/lib/severity"
 import { cn, formatDate, relativeTime, titleCase } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
@@ -293,6 +294,11 @@ export default function AssessmentDetailPage() {
     queryFn: () => reportApi.list({ assessment_id: assessmentId }),
     enabled: Number.isFinite(assessmentId),
   })
+  const { data: attackPaths } = useQuery({
+    queryKey: ["attack-paths", assessmentId],
+    queryFn: () => assessmentApi.attackPaths(assessmentId),
+    enabled: Number.isFinite(assessmentId),
+  })
   const { data: activity } = useQuery({
     queryKey: ["audit", { assessment_id: assessmentId }],
     queryFn: () => auditApi.list({ assessment_id: assessmentId, page_size: 50 }),
@@ -382,6 +388,12 @@ export default function AssessmentDetailPage() {
           <TabsTrigger value="targets">Targets <Badge variant="muted" className="ml-1">{targets?.length ?? 0}</Badge></TabsTrigger>
           <TabsTrigger value="scans">Scans <Badge variant="muted" className="ml-1">{scans?.total ?? 0}</Badge></TabsTrigger>
           <TabsTrigger value="findings">Findings <Badge variant="muted" className="ml-1">{findings?.total ?? 0}</Badge></TabsTrigger>
+          <TabsTrigger value="attack-paths">
+            <Waypoints className="h-3.5 w-3.5" /> Attack paths
+            {(attackPaths?.summary.paths ?? 0) > 0 && (
+              <Badge variant="muted" className="ml-1">{attackPaths?.summary.paths}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="reports">Reports <Badge variant="muted" className="ml-1">{reports?.total ?? 0}</Badge></TabsTrigger>
           {can("audit:view") && <TabsTrigger value="activity">Activity</TabsTrigger>}
         </TabsList>
@@ -604,10 +616,19 @@ export default function AssessmentDetailPage() {
           </Card>
         </TabsContent>
 
+        {/* ---------------------------------------------------- attack paths */}
+        <TabsContent value="attack-paths">
+          {attackPaths ? (
+            <AttackPathPanel data={attackPaths} />
+          ) : (
+            <Skeleton className="h-96" />
+          )}
+        </TabsContent>
+
         {/* --------------------------------------------------------- reports */}
         <TabsContent value="reports">
           <Card className="overflow-hidden">
-            {!reports || reports.items.length === 0 ? (
+            {!reports?.items?.length ? (
               <EmptyState
                 icon={FileText}
                 title="No reports generated"

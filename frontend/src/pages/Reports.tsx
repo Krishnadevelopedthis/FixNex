@@ -46,7 +46,7 @@ export default function ReportsPage() {
           <TableSkeleton rows={5} cols={6} />
         ) : error ? (
           <ErrorState error={error} onRetry={refetch} />
-        ) : data && data.items.length === 0 ? (
+        ) : !data?.items?.length ? (
           <EmptyState
             icon={FileText}
             title="No reports yet"

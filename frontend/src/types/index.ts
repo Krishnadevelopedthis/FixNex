@@ -472,3 +472,68 @@ export interface RoleInfo {
   description: string
   permissions: string[]
 }
+
+/* ------------------------------------------------------------ attack paths */
+export interface AttackPathNode {
+  id: string
+  kind: "finding" | "outcome"
+  title: string
+  severity: string
+  finding_id?: number | null
+  reference?: string | null
+  category?: string | null
+  cwe_id?: string | null
+  status?: string | null
+  endpoint?: string | null
+  target_id?: number | null
+  target_name?: string | null
+  rule_id?: string | null
+  rule_name?: string | null
+  rationale?: string | null
+}
+
+export interface AttackPathEdge {
+  id: string
+  source: string
+  target: string
+  role: "prerequisite" | "enabler"
+  rule_id: string
+  label: string
+}
+
+export interface AttackPathStep {
+  finding_id: number
+  reference: string
+  title: string
+  severity: string
+}
+
+export interface AttackPath {
+  rule_id: string
+  rule_name: string
+  outcome: string
+  outcome_severity: string
+  rationale: string
+  target_id?: number | null
+  target_name?: string | null
+  prerequisite: AttackPathStep
+  enabler: AttackPathStep
+  same_surface: boolean
+  escalates: boolean
+}
+
+export interface AttackPathResponse {
+  assessment_id: number
+  nodes: AttackPathNode[]
+  edges: AttackPathEdge[]
+  paths: AttackPath[]
+  summary: {
+    paths: number
+    escalating_paths: number
+    findings_considered: number
+    findings_in_paths: number
+    highest_outcome_severity?: string | null
+    rules_evaluated: number
+  }
+  disclaimer: string
+}
