@@ -5,10 +5,32 @@ services:
     pythonVersion: 3.11
     plan: starter
     region: oregon
+
     buildCommand: cd backend && pip install --upgrade pip setuptools wheel && pip install --prefer-binary -r requirements.txt
-    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port 8000
-    healthCheckPath: /api/docs
-    healthCheckInterval: 30
+
+    # Render assigns the port at runtime and health-checks that port. Binding a
+    # hardcoded 8000 means the probe never succeeds and the deploy never goes
+    # live, which is what "x-render-routing: no-server" reports.
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+
+    # Applies database migrations before the new version takes traffic.
+    # Render does not run a Procfile "release:" line - that is a Heroku
+    # convention - so without this the schema is never created.
+    preDeployCommand: cd backend && alembic upgrade head
+
+    # /health is the purpose-built liveness probe: a small JSON body with no
+    # database work, unlike rendering the Swagger page.
+    healthCheckPath: /health
+
+    # Evidence files and generated reports live here. Without a persistent disk
+    # the instance filesystem is wiped on every deploy and restart, so every
+    # uploaded screenshot and request capture would be destroyed while its
+    # metadata and SHA-256 stayed in the database - a broken chain of custody.
+    disk:
+      name: fixnex-evidence
+      mountPath: /var/data
+      sizeGB: 1
+
     envVars:
       - key: ENVIRONMENT
         value: production
@@ -24,9 +46,15 @@ services:
         value: thread
       - key: STORAGE_BACKEND
         value: local
+      - key: LOCAL_STORAGE_PATH
+        value: /var/data/storage
       - key: MAX_UPLOAD_BYTES
         value: "26214400"
       - key: OFFLINE_MODE
         value: "false"
       - key: PYTHONUNBUFFERED
         value: "1"
+      # Optional: enables AI triage suggestions. Left unset, the feature reports
+      # itself unavailable on the System Health page and nothing else changes.
+      - key: ANTHROPIC_API_KEY
+        sync: false
