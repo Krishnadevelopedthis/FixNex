@@ -3,10 +3,21 @@ from __future__ import annotations
 import asyncio
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Request, WebSocket, WebSocketDisconnect, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    Query,
+    Request,
+    UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 
 from app.api.deps import CurrentUser, DbSession, Pagination, require_assessment_access, require_permission
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import NotFoundError, ValidationError
 from app.core.permissions import Permission
 from app.db.session import SessionLocal
 from app.models.enums import ScanStatus
@@ -177,6 +188,66 @@ def cancel_scan(scan_id: int, request: Request, db: DbSession, user: CurrentUser
         raise NotFoundError(f"Scan {scan_id} was not found.")
     require_assessment_access(db, user, job.assessment_id)
     job = service.cancel_scan_job(db, user, job, request)
+    return _to_read(job, include_commands=user.has_permission(Permission.SYSTEM_VIEW))
+
+
+# Tools whose SARIF output is commonly imported. The list is advisory — any tool
+# emitting SARIF 2.1.0 is accepted, this only drives the UI picker.
+KNOWN_SARIF_TOOLS = [
+    "semgrep", "trivy", "gitleaks", "snyk", "checkov", "codeql",
+    "sonarqube", "bandit", "tfsec", "grype", "kics", "eslint",
+]
+
+
+@router.get(
+    "/import/tools",
+    response_model=list[str],
+    dependencies=[Depends(require_permission(Permission.SCAN_CREATE))],
+    summary="Tools commonly imported via SARIF",
+)
+def sarif_tools() -> list[str]:
+    return KNOWN_SARIF_TOOLS
+
+
+@router.post(
+    "/import",
+    response_model=ScanRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_permission(Permission.SCAN_CREATE))],
+    summary="Import a SARIF report produced by another tool",
+)
+def import_scan(
+    request: Request,
+    db: DbSession,
+    user: CurrentUser,
+    assessment_id: Annotated[int, Form(description="Assessment to attach the findings to")],
+    target_id: Annotated[int, Form(description="Authorised target the results relate to")],
+    tool_name: Annotated[str, Form(description="Tool that produced the report, e.g. semgrep")],
+    file: Annotated[UploadFile, File(description="SARIF 2.1.0 document")],
+) -> ScanRead:
+    """Ingest results from any SARIF-emitting scanner.
+
+    The upload is parsed into the platform's normalised finding format and run
+    through the same pipeline as a live scan, so correlation, CVSS/CWE scoring,
+    contextual risk and SLA all apply. Findings are recorded with an IMPORTED
+    origin and an `imported:<tool>` source so their provenance stays explicit —
+    they are never presented as a scan PR-CAMPUS executed.
+    """
+    require_assessment_access(db, user, assessment_id)
+
+    raw = file.file.read()
+    if not raw:
+        raise ValidationError("The uploaded file is empty.")
+
+    job = service.import_scan_results(
+        db,
+        user,
+        assessment_id=assessment_id,
+        target_id=target_id,
+        tool_name=tool_name,
+        raw=raw,
+        request=request,
+    )
     return _to_read(job, include_commands=user.has_permission(Permission.SYSTEM_VIEW))
 
 

@@ -54,6 +54,8 @@ class ScanProfile(StrEnum):
     LIGHT = "LIGHT"
     STANDARD = "STANDARD"
     COMPREHENSIVE = "COMPREHENSIVE"
+    # Results produced by a tool elsewhere and uploaded (e.g. SARIF from CI).
+    IMPORTED = "IMPORTED"
 
 
 class ScanStatus(StrEnum):
@@ -167,7 +169,8 @@ class DataOrigin(StrEnum):
     surfaced in the UI and in reports.
     """
 
-    REAL_SCAN = "REAL_SCAN"      # produced by a scanner that actually executed
+    REAL_SCAN = "REAL_SCAN"      # produced by a scanner PR-CAMPUS itself executed
+    IMPORTED = "IMPORTED"        # produced by a tool elsewhere, uploaded as SARIF
     MANUAL = "MANUAL"            # raised by an analyst during manual testing
     SEEDED_DEMO = "SEEDED_DEMO"  # demo seed data, always labelled as such
 

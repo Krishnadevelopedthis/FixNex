@@ -1,10 +1,11 @@
 import * as React from "react"
 import { useNavigate } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { AlertTriangle, CheckCircle2, Radar, ShieldAlert, XCircle } from "lucide-react"
+import { AlertTriangle, CheckCircle2, Radar, ShieldAlert, Upload, XCircle } from "lucide-react"
 import { assessmentApi, scanApi } from "@/services/endpoints"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/misc"
 import {
@@ -207,6 +208,146 @@ export function NewScanDialog({ open, onOpenChange, assessmentId, targetId }: {
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button loading={mutation.isPending} disabled={!valid} onClick={() => mutation.mutate()}>
             <Radar /> Start scan
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+
+/* ------------------------------------------------------------ SARIF import */
+export function ImportSarifDialog({ open, onOpenChange, assessmentId }: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  assessmentId?: number
+}) {
+  const [assessment, setAssessment] = React.useState(assessmentId ? String(assessmentId) : "")
+  const [target, setTarget] = React.useState("")
+  const [tool, setTool] = React.useState("semgrep")
+  const [file, setFile] = React.useState<File | null>(null)
+  const { toast } = useToast()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
+  React.useEffect(() => {
+    if (open) {
+      setAssessment(assessmentId ? String(assessmentId) : "")
+      setTarget(""); setTool("semgrep"); setFile(null)
+    }
+  }, [open, assessmentId])
+
+  const { data: assessments } = useQuery({
+    queryKey: ["assessments", "picker"],
+    queryFn: () => assessmentApi.list({ page_size: 100 }),
+    enabled: open && !assessmentId,
+  })
+  const { data: targets } = useQuery({
+    queryKey: ["assessment-targets", assessment],
+    queryFn: () => assessmentApi.targets(Number(assessment)),
+    enabled: open && !!assessment,
+  })
+  const { data: tools } = useQuery({
+    queryKey: ["import-tools"], queryFn: scanApi.importTools, enabled: open,
+  })
+
+  const mutation = useMutation({
+    mutationFn: () => scanApi.importSarif(Number(assessment), Number(target), tool, file!),
+    onSuccess: (scan) => {
+      toast(
+        "success",
+        `Imported ${scan.findings_count} findings from ${tool}`,
+        scan.duplicates_merged > 0
+          ? `${scan.duplicates_merged} correlated with findings you already had.`
+          : undefined
+      )
+      queryClient.invalidateQueries({ queryKey: ["scans"] })
+      queryClient.invalidateQueries({ queryKey: ["findings"] })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+      onOpenChange(false)
+      navigate(`/scans/${scan.id}`)
+    },
+    onError: (e) => toast("error", "Import failed", errorMessage(e)),
+  })
+
+  const valid = assessment && target && tool.trim() && file
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Import scan results (SARIF)</DialogTitle>
+          <DialogDescription>
+            Upload a SARIF 2.1.0 report from any tool — Semgrep, Trivy, Gitleaks, Snyk,
+            Checkov, CodeQL and others. Results are normalized, correlated and scored
+            exactly like a scan run here.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {!assessmentId && (
+            <div className="space-y-1.5">
+              <Label>Assessment <span className="text-destructive">*</span></Label>
+              <Select value={assessment} onValueChange={(v) => { setAssessment(v); setTarget("") }}>
+                <SelectTrigger><SelectValue placeholder="Choose an assessment" /></SelectTrigger>
+                <SelectContent>
+                  {assessments?.items.map((a) => (
+                    <SelectItem key={a.id} value={String(a.id)}>{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <Label>Target <span className="text-destructive">*</span></Label>
+            <Select value={target} onValueChange={setTarget} disabled={!assessment}>
+              <SelectTrigger><SelectValue placeholder="Which target do these results describe?" /></SelectTrigger>
+              <SelectContent>
+                {targets?.map((t) => (
+                  <SelectItem key={t.id} value={String(t.id)} disabled={t.status !== "AUTHORIZED"}>
+                    {t.name} — {t.value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Tool <span className="text-destructive">*</span></Label>
+            <Select value={tool} onValueChange={setTool}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {(tools ?? ["semgrep"]).map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Findings are attributed to <code className="font-mono">imported:{tool}</code> so
+              their origin stays explicit.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="sarif-file">SARIF file <span className="text-destructive">*</span></Label>
+            <Input
+              id="sarif-file" type="file" accept=".sarif,.json,application/json"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="file:mr-3 file:rounded file:border-0 file:bg-secondary file:px-2 file:py-1 file:text-xs"
+            />
+            {file && (
+              <p className="text-[11px] text-muted-foreground">
+                {file.name} · {(file.size / 1024).toFixed(0)} KB
+              </p>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button loading={mutation.isPending} disabled={!valid} onClick={() => mutation.mutate()}>
+            <Upload /> Import results
           </Button>
         </DialogFooter>
       </DialogContent>

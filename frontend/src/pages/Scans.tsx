@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
-import { Radar } from "lucide-react"
+import { Radar, Upload } from "lucide-react"
 import { scanApi } from "@/services/endpoints"
 import { PageHeader } from "@/layouts/AppLayout"
 import { Card } from "@/components/ui/card"
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Badge, StatusBadge } from "@/components/ui/badge"
 import { EmptyState, ErrorState, Progress, TableSkeleton } from "@/components/ui/misc"
 import { Pagination, Table, TBody, TD, TH, THead, TR } from "@/components/ui/table"
-import { NewScanDialog } from "@/components/scan-dialogs"
+import { ImportSarifDialog, NewScanDialog } from "@/components/scan-dialogs"
 import { relativeTime, titleCase } from "@/lib/utils"
 import { useAuth } from "@/hooks/useAuth"
 
@@ -17,6 +17,7 @@ export default function ScansPage() {
   const { can } = useAuth()
   const [page, setPage] = React.useState(1)
   const [open, setOpen] = React.useState(false)
+  const [importOpen, setImportOpen] = React.useState(false)
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["scans", { page }],
@@ -31,7 +32,16 @@ export default function ScansPage() {
       <PageHeader
         title="Scans"
         description="Every orchestrated scan, and which scanners contributed to it."
-        actions={can("scan:create") ? <Button onClick={() => setOpen(true)}><Radar /> New scan</Button> : null}
+        actions={
+          can("scan:create") ? (
+            <>
+              <Button variant="outline" onClick={() => setImportOpen(true)}>
+                <Upload /> Import SARIF
+              </Button>
+              <Button onClick={() => setOpen(true)}><Radar /> New scan</Button>
+            </>
+          ) : null
+        }
       />
 
       <Card className="overflow-hidden">
@@ -94,6 +104,7 @@ export default function ScansPage() {
       </Card>
 
       <NewScanDialog open={open} onOpenChange={setOpen} />
+      <ImportSarifDialog open={importOpen} onOpenChange={setImportOpen} />
     </>
   )
 }

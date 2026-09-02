@@ -79,6 +79,17 @@ export const scanApi = {
   create: (payload: Record<string, unknown>) => api.post<Scan>("/scans", payload).then((r) => r.data),
   cancel: (id: number) => api.post<Scan>(`/scans/${id}/cancel`).then((r) => r.data),
   scanners: () => api.get<ScannerInfo[]>("/scans/scanners").then((r) => r.data),
+  importTools: () => api.get<string[]>("/scans/import/tools").then((r) => r.data),
+  importSarif: (assessmentId: number, targetId: number, toolName: string, file: File) => {
+    const form = new FormData()
+    form.append("assessment_id", String(assessmentId))
+    form.append("target_id", String(targetId))
+    form.append("tool_name", toolName)
+    form.append("file", file)
+    return api
+      .post<Scan>("/scans/import", form, { headers: { "Content-Type": "multipart/form-data" } })
+      .then((r) => r.data)
+  },
   profiles: () => api.get<ScanProfileInfo[]>("/scans/profiles").then((r) => r.data),
 }
 

@@ -1,3 +1,4 @@
+import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Check, ShieldCheck, X } from "lucide-react"
 import { userApi } from "@/services/endpoints"
@@ -69,8 +70,8 @@ export default function RolesPage() {
           </THead>
           <TBody>
             {Object.entries(groups).map(([resource, permissions]) => (
-              <>
-                <TR key={resource} className="bg-muted/50 hover:bg-muted/50">
+              <React.Fragment key={resource}>
+                <TR className="bg-muted/50 hover:bg-muted/50">
                   <TD colSpan={data.length + 1} className="py-1.5">
                     <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       {titleCase(resource)}
@@ -94,7 +95,7 @@ export default function RolesPage() {
                     })}
                   </TR>
                 ))}
-              </>
+              </React.Fragment>
             ))}
           </TBody>
         </Table>

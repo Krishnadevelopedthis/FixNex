@@ -49,8 +49,14 @@ def ingest(
     scan_job: ScanJob,
     scanner_run: ScannerRun | None,
     normalized: list[NormalizedFinding],
+    data_origin: str = DataOrigin.REAL_SCAN,
 ) -> IngestStats:
-    """Persist one scanner's normalised findings into the assessment."""
+    """Persist one scanner's normalised findings into the assessment.
+
+    `data_origin` records how the findings came to exist. It defaults to
+    REAL_SCAN for scanners this platform executed; uploaded SARIF passes
+    IMPORTED so a result produced elsewhere is never presented as a local scan.
+    """
     stats = IngestStats(raw=len(normalized))
     if not normalized:
         return stats
@@ -69,7 +75,7 @@ def ingest(
             _merge_into_existing(db, existing, merged, scan_job, scanner_run, group)
             stats.merged += 1
         else:
-            _create_finding(db, merged, key, scan_job, scanner_run, group, context)
+            _create_finding(db, merged, key, scan_job, scanner_run, group, context, data_origin)
             stats.created += 1
 
     db.flush()
@@ -85,6 +91,7 @@ def _create_finding(
     scanner_run: ScannerRun | None,
     group: list[NormalizedFinding],
     context: dict,
+    data_origin: str = DataOrigin.REAL_SCAN,
 ) -> Finding:
     cvss = score_finding(merged.cvss_vector, merged.cvss, merged.severity)
 
@@ -133,7 +140,7 @@ def _create_finding(
         remediation_recommendation=merged.remediation,
         references=merged.references,
         primary_source=str(merged.source),
-        data_origin=DataOrigin.REAL_SCAN,
+        data_origin=data_origin,
         is_demo=scan_job.assessment.is_demo,
         correlation_key=key,
         source_count=len({f.source for f in group}),

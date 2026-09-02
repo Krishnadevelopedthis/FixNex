@@ -186,7 +186,7 @@ export default function ScanDetailPage() {
                 const style = RUN_ICONS[run.status] ?? RUN_ICONS.PENDING
                 const Icon = style.icon
                 return (
-                  <li key={run.id} className="flex items-start gap-3 px-5 py-3">
+                  <li key={run.id ?? run.scanner} className="flex items-start gap-3 px-5 py-3">
                     <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", style.tone)} />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">

@@ -23,6 +23,7 @@ rest of the scan continues.
 from __future__ import annotations
 
 import logging
+import re
 
 from fastapi import Request
 from sqlalchemy.orm import Session
@@ -38,6 +39,7 @@ from app.db.session import session_scope
 from app.models.assessment import Assessment
 from app.models.enums import (
     AssessmentStatus,
+    DataOrigin,
     ScannerRunStatus,
     ScanProfile,
     ScanStatus,
@@ -399,3 +401,133 @@ def _finalise(scan_job_id: int, status: str, operation: str) -> None:
         if runs and all(r.status == ScannerRunStatus.FAILED for r in runs):
             job.status = ScanStatus.FAILED
             job.error_message = "Every scanner failed. See the individual scanner runs for detail."
+
+
+# ---------------------------------------------------------------------------
+# Imported results (SARIF)
+# ---------------------------------------------------------------------------
+def import_scan_results(
+    db: Session,
+    user: User,
+    *,
+    assessment_id: int,
+    target_id: int,
+    tool_name: str,
+    raw: bytes,
+    request: Request | None = None,
+) -> ScanJob:
+    """Ingest a SARIF report produced by a tool run outside PR-CAMPUS.
+
+    Nothing is executed here — the file is parsed into the same
+    `NormalizedFinding` list a live adapter produces and handed to the existing
+    ingest pipeline, so correlation, scoring, risk and SLA behave identically.
+
+    The scope gate still applies: findings may only be attached to a target that
+    is inside the assessment's authorised scope, and a blocked attempt is
+    audited exactly as a blocked scan is.
+    """
+    from app.scanners.sarif_import import parse_sarif_bytes
+
+    assessment = db.get(Assessment, assessment_id)
+    if assessment is None:
+        raise NotFoundError(f"Assessment {assessment_id} was not found.")
+    if assessment.status in (AssessmentStatus.ARCHIVED, AssessmentStatus.COMPLETED):
+        raise ConflictError(
+            f"Assessment {assessment.reference} is {assessment.status.lower()} and cannot "
+            "accept new findings."
+        )
+
+    target = db.get(Target, target_id)
+    if target is None or target.assessment_id != assessment_id:
+        raise NotFoundError("The target was not found in this assessment.")
+
+    if not target.authorization_confirmed:
+        raise ScopeViolationError(
+            f"Target {target.value} has not been marked as authorised for testing. "
+            "Findings cannot be attached to an unauthorised target."
+        )
+
+    decision = scope.check(db, assessment, target.value)
+    if not decision.in_scope:
+        audit.record(
+            db,
+            action=AuditAction.SCOPE_VIOLATION_BLOCKED,
+            user=user,
+            resource_type="Target",
+            resource_id=target.id,
+            assessment_id=assessment.id,
+            description=f"SARIF import for {target.value} was blocked: {decision.reason}",
+            request=request,
+        )
+        db.commit()
+        raise ScopeViolationError(decision.reason)
+
+    clean_tool = re.sub(r"[^a-zA-Z0-9_.-]", "", (tool_name or "").strip())[:40].lower()
+    if not clean_tool:
+        raise ValidationError("A tool name is required so the findings can be attributed.")
+
+    findings, metrics = parse_sarif_bytes(raw, clean_tool, target.value)
+    scanner_name = f"imported:{clean_tool}"
+
+    now = utcnow()
+    job = ScanJob(
+        assessment_id=assessment.id,
+        target_id=target.id,
+        profile=ScanProfile.IMPORTED,
+        status=ScanStatus.RUNNING,
+        progress=0,
+        current_operation=f"Importing {clean_tool} results",
+        requested_scanners=[scanner_name],
+        created_by_id=user.id,
+        started_at=now,
+        task_runner="import",
+    )
+    db.add(job)
+    assign_reference(db, job)
+
+    run = ScannerRun(
+        scan_job_id=job.id,
+        scanner=scanner_name,
+        status=ScannerRunStatus.RUNNING,
+        started_at=now,
+        command_summary=f"SARIF import ({len(raw)} bytes) from {clean_tool}",
+        tool_version=metrics.get("sarif_version"),
+    )
+    db.add(run)
+    db.flush()
+
+    stats = ingest.ingest(db, job, run, findings, data_origin=DataOrigin.IMPORTED)
+
+    completed = utcnow()
+    run.status = ScannerRunStatus.COMPLETED
+    run.completed_at = completed
+    run.duration_ms = int((completed - now).total_seconds() * 1000)
+    run.exit_code = 0
+    run.raw_findings_count = stats.raw
+    run.metrics = metrics
+
+    job.status = ScanStatus.COMPLETED
+    job.progress = 100
+    job.current_operation = f"Imported {stats.created} findings from {clean_tool}"
+    job.completed_at = completed
+    job.findings_count = stats.created
+    job.raw_findings_count = stats.raw
+    job.duplicates_merged = stats.merged
+
+    audit.record(
+        db,
+        action=AuditAction.SCAN_COMPLETED,
+        user=user,
+        resource_type="ScanJob",
+        resource_id=job.id,
+        assessment_id=assessment.id,
+        description=(
+            f"Imported {stats.raw} {clean_tool} results for {target.value}: "
+            f"{stats.created} new findings, {stats.merged} correlated with existing ones."
+        ),
+        new_value={"tool": clean_tool, **metrics},
+        request=request,
+    )
+    db.commit()
+    db.refresh(job)
+    return job
