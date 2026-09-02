@@ -1,4 +1,5 @@
 import * as React from "react"
+import { useLocation } from "react-router-dom"
 import { AlertTriangle, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -8,17 +9,32 @@ interface State {
   info: React.ErrorInfo | null
 }
 
+interface Props {
+  children: React.ReactNode
+  /** Changes when the route does, so a caught error does not outlive the page. */
+  resetKey?: string
+}
+
 /**
  * Catches render errors so one broken screen cannot blank the whole app.
  *
  * Without this, a single bad render unmounts the entire tree and the user is
  * left staring at an empty page with no way back.
  */
-export class ErrorBoundary extends React.Component<{ children: React.ReactNode }, State> {
+class ErrorBoundaryInner extends React.Component<Props, State> {
   state: State = { error: null, info: null }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     return { error }
+  }
+
+  componentDidUpdate(prev: Props) {
+    // Without this the boundary latches: one broken screen keeps rendering the
+    // fallback for every route the user visits afterwards, so the whole app
+    // looks dead until a hard reload.
+    if (this.state.error && prev.resetKey !== this.props.resetKey) {
+      this.setState({ error: null, info: null })
+    }
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
@@ -63,4 +79,11 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
       </div>
     )
   }
+}
+
+
+/** Route-aware wrapper: the boundary clears itself when the location changes. */
+export function ErrorBoundary({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
+  return <ErrorBoundaryInner resetKey={location.pathname}>{children}</ErrorBoundaryInner>
 }

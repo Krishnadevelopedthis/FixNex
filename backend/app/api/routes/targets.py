@@ -4,13 +4,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request, status
 
-from app.api.deps import CurrentUser, DbSession, require_assessment_access, require_permission
+from app.api.deps import CurrentUser, DbSession, Pagination, require_assessment_access, require_permission
 from app.core.exceptions import NotFoundError
 from app.core.permissions import Permission
 from app.models.asset import Asset
 from app.models.target import Target
 from app.schemas.assets import AssetCreate, AssetRead, AssetUpdate
-from app.schemas.common import MessageResponse
+from app.schemas.common import MessageResponse, Page
 from app.schemas.targets import (
     OpenAPIImportRequest,
     OpenAPIImportResult,
@@ -34,16 +34,18 @@ def _get_target(db, user, target_id: int) -> Target:
 # --------------------------------------------------------------------- targets
 @router.get(
     "/targets",
-    response_model=list[TargetRead],
+    response_model=Page[TargetRead],
     dependencies=[Depends(require_permission(Permission.TARGET_VIEW))],
     summary="List targets across assessments",
 )
 def list_targets(
     db: DbSession,
     user: CurrentUser,
+    pagination: Pagination,
     assessment_id: Annotated[int | None, Query()] = None,
     search: Annotated[str | None, Query(max_length=200)] = None,
-) -> list[TargetRead]:
+) -> Page[TargetRead]:
+    """Paginated, like every other collection endpoint on this API."""
     query = db.query(Target)
     if assessment_id:
         require_assessment_access(db, user, assessment_id)
@@ -51,7 +53,17 @@ def list_targets(
     if search:
         term = f"%{search.strip()}%"
         query = query.filter(Target.name.ilike(term) | Target.value.ilike(term))
-    return [service.to_read(db, t) for t in query.order_by(Target.id.desc()).limit(200).all()]
+
+    total = query.count()
+    rows = (
+        query.order_by(Target.id.desc())
+        .offset(pagination.offset)
+        .limit(pagination.page_size)
+        .all()
+    )
+    return Page.build(
+        [service.to_read(db, t) for t in rows], total, pagination.page, pagination.page_size
+    )
 
 
 @router.get(
@@ -125,12 +137,20 @@ def import_openapi(
 # ---------------------------------------------------------------------- assets
 @router.get(
     "/assets",
-    response_model=list[AssetRead],
+    response_model=Page[AssetRead],
     dependencies=[Depends(require_permission(Permission.ASSET_VIEW))],
     summary="Asset inventory",
 )
-def list_assets(db: DbSession, user: CurrentUser) -> list[AssetRead]:
-    return [service.asset_read(db, a) for a in db.query(Asset).order_by(Asset.id).all()]
+def list_assets(db: DbSession, user: CurrentUser, pagination: Pagination) -> Page[AssetRead]:
+    """Paginated, like every other collection endpoint on this API."""
+    query = db.query(Asset)
+    total = query.count()
+    rows = (
+        query.order_by(Asset.id).offset(pagination.offset).limit(pagination.page_size).all()
+    )
+    return Page.build(
+        [service.asset_read(db, a) for a in rows], total, pagination.page, pagination.page_size
+    )
 
 
 @router.post(

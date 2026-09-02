@@ -35,7 +35,7 @@ export default function TargetsPage() {
           <TableSkeleton rows={6} cols={7} />
         ) : error ? (
           <ErrorState error={error} onRetry={refetch} />
-        ) : data && data.items.length === 0 ? (
+        ) : !data?.items?.length ? (
           <EmptyState
             icon={Crosshair}
             title="No targets yet"

@@ -144,7 +144,7 @@ export default function AssetsPage() {
         </div>
       ) : error ? (
         <Card><ErrorState error={error} onRetry={refetch} /></Card>
-      ) : data && data.items.length === 0 ? (
+      ) : !data?.items?.length ? (
         <Card>
           <EmptyState
             icon={Server}

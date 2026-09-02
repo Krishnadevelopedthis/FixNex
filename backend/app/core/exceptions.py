@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import DataError, IntegrityError, SQLAlchemyError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 logger = logging.getLogger("prcampus.errors")
@@ -142,6 +142,21 @@ def register_exception_handlers(app: FastAPI) -> None:
                 "error": {
                     "code": "integrity_error",
                     "message": "The operation violates a database constraint.",
+                }
+            },
+        )
+
+    @app.exception_handler(DataError)
+    async def _data_error(_: Request, exc: DataError) -> JSONResponse:
+        # A value the database refuses (numeric overflow, bad cast) came from
+        # the request, so report it as a client error rather than a 500.
+        logger.warning("Rejected out-of-range value: %s", str(exc.orig)[:200])
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
+                "error": {
+                    "code": "invalid_value",
+                    "message": "A supplied value is outside the range this API accepts.",
                 }
             },
         )

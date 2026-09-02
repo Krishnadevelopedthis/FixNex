@@ -20,6 +20,8 @@ from app.models.user import User
 from app.schemas.common import PaginationParams
 from app.security.tokens import decode_token
 
+MAX_PAGE = 1_000_000
+
 bearer_scheme = HTTPBearer(auto_error=False, description="JWT access token")
 
 DbSession = Annotated[Session, Depends(get_db)]
@@ -82,7 +84,10 @@ def require_any_permission(*permissions: Permission | str) -> Callable[..., User
 
 
 def get_pagination(
-    page: Annotated[int, Query(ge=1)] = 1,
+    # `page` is bounded as well as `page_size`: the SQL OFFSET is
+    # (page - 1) * page_size, and an unbounded page overflows a bigint, which
+    # surfaced as a 500 rather than a validation error.
+    page: Annotated[int, Query(ge=1, le=MAX_PAGE)] = 1,
     page_size: Annotated[int, Query(ge=1, le=200)] = 25,
 ) -> PaginationParams:
     return PaginationParams(page=page, page_size=page_size)
