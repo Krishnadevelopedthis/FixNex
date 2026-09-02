@@ -1,6 +1,6 @@
 import { api } from "./api"
 import type {
-  Assessment, Asset, AttackPathResponse, AuditLog, ComplianceResponse, CurrentUser, Dashboard, Evidence, Finding, FindingDetail,
+  AITriageSuggestion, Assessment, Asset, AttackPathResponse, AuditLog, ComplianceResponse, CurrentUser, Dashboard, Evidence, Finding, FindingDetail,
   Page, Remediation, Report, Retest, RoleInfo, Scan, ScannerInfo, ScanProfileInfo,
   ScopeRule, SystemHealth, Target, TokenResponse,
 } from "@/types"
@@ -116,6 +116,9 @@ export const findingApi = {
     api.post<FindingDetail>(`/findings/${id}/score`, payload).then((r) => r.data),
   suppress: (id: number, payload: { suppressed: boolean; reason?: string }) =>
     api.post<FindingDetail>(`/findings/${id}/suppress`, payload).then((r) => r.data),
+  aiTriage: (id: number, refresh = false) =>
+    api.get<AITriageSuggestion>(`/findings/${id}/ai-triage`, { params: { refresh } })
+      .then((r) => r.data),
   comment: (id: number, body: string) =>
     api.post(`/findings/${id}/comments`, { body }).then((r) => r.data),
 

@@ -617,3 +617,18 @@ export interface ComplianceResponse {
   }
   disclaimer: string
 }
+
+/* --------------------------------------------------------------- AI triage */
+export interface AITriageSuggestion {
+  false_positive_confidence: number
+  reasoning: string
+  suggested_fix: string
+  verification_steps: string
+  model?: string | null
+  effort?: string | null
+  generated_at?: string | null
+  input_tokens?: number | null
+  output_tokens?: number | null
+  cached: boolean
+  disclaimer: string
+}

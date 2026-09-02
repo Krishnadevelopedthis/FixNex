@@ -106,6 +106,19 @@ class Settings(BaseSettings):
     SLA_HOURS_INFORMATIONAL: int = 720
     SLA_DUE_SOON_RATIO: float = 0.75
 
+    # ------------------------------------------------------- AI triage (opt-in)
+    # Entirely optional. With no key configured the feature reports itself as
+    # unavailable, exactly as an uninstalled scanner does, and nothing else in
+    # the platform changes behaviour.
+    AI_TRIAGE_ENABLED: bool = True
+    ANTHROPIC_API_KEY: str = ""
+    AI_TRIAGE_MODEL: str = "claude-opus-5"
+    # Triage is a bounded judgement an analyst still reviews, so the default
+    # trades a little depth for cost; raise to "high" if suggestions look thin.
+    AI_TRIAGE_EFFORT: Literal["low", "medium", "high", "xhigh", "max"] = "medium"
+    AI_TRIAGE_TIMEOUT_SECONDS: int = 60
+    AI_TRIAGE_CACHE_HOURS: int = 168
+
     # ------------------------------------------------------------ demo mode
     DEMO_MODE: bool = True
     SEED_ON_STARTUP: bool = False

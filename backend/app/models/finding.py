@@ -104,6 +104,10 @@ class Finding(Base, TimestampMixin):
     priority: Mapped[str | None] = mapped_column(String(10), index=True)
     sla_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
 
+    # Cached AI triage suggestion. Advisory only — it never drives status.
+    ai_triage: Mapped[dict | None] = mapped_column(JSONType)
+    ai_triage_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
     first_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

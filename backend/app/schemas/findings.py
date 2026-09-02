@@ -280,3 +280,22 @@ class FindingFilters(BaseModel):
     include_false_positive: bool = True
     include_demo: bool = True
     sla_status: str | None = None
+
+
+class AITriageSuggestion(BaseModel):
+    """An advisory suggestion. It never changes a finding's state."""
+
+    false_positive_confidence: float = Field(ge=0.0, le=1.0)
+    reasoning: str = ""
+    suggested_fix: str = ""
+    verification_steps: str = ""
+    model: str | None = None
+    effort: str | None = None
+    generated_at: str | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    cached: bool = False
+    disclaimer: str = (
+        "AI suggestion — not a verdict. It does not change this finding's verification "
+        "status, severity or risk; an analyst still confirms or rejects it."
+    )

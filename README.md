@@ -55,6 +55,11 @@ Security tools → Scanner adapters → Normalized findings → Correlation
 | **Retesting** | A passing retest closes the finding; a failing one reopens remediation, with full history |
 | **Audit trail** | Append-only. There is no API route and no role permission that can edit or delete an audit record |
 | **Reporting** | PDF, CSV, JSON, XLSX and HTML covering scope, methodology, findings, evidence, remediation and retests |
+| **Broad tool coverage** | Any SARIF-emitting scanner (Semgrep, Trivy, Gitleaks, Snyk, Checkov, CodeQL…) imports into the same pipeline |
+| **Attack paths** | Chain rules link findings that co-occur on a system into the higher-severity outcome they enable |
+| **Compliance rollup** | Findings map to OWASP Top 10 and to NIST SP 800-53 / ISO 27001 controls, with per-control readiness |
+| **Posture scoring** | One 0-100 score per assessment, always shown with the deductions that produced it |
+| **AI triage (optional)** | A false-positive likelihood, reasoning and suggested fix, surfaced beside the analyst's own verify action — never applied automatically |
 
 ---
 
@@ -283,6 +288,7 @@ and wraps five **external tools** that are used automatically when present.
 | `zap` | external | Spider + passive rules; active scan on Comprehensive | ZAP daemon at `ZAP_API_URL` |
 | `whatweb` | external | Web technology fingerprinting | `whatweb` on PATH |
 | `ssl_labs` | external | Third-party TLS grading | Internet access, public target |
+| *SARIF import* | import | Any tool emitting SARIF 2.1.0 — Semgrep, Trivy, Gitleaks, Snyk, Checkov, CodeQL, SonarQube | a report file |
 
 **When a tool is missing** it is reported as unavailable on the System Health page and in
 the scan dialog, then skipped. The scan still runs and still produces findings.
@@ -382,6 +388,8 @@ Copy `.env.example` to `.env`. Never commit `.env`.
 | `NMAP_PATH` / `NUCLEI_PATH` / `WHATWEB_PATH` | binary name | Resolved on `PATH` |
 | `ZAP_API_URL` / `ZAP_API_KEY` | — | ZAP daemon |
 | `SLA_HOURS_CRITICAL` … `_LOW` | `24` / `72` / `168` / `336` | Also editable in-app |
+| `ANTHROPIC_API_KEY` | — | Optional; enables AI triage suggestions. Without it the feature reports itself unavailable and nothing else changes |
+| `AI_TRIAGE_MODEL` / `AI_TRIAGE_EFFORT` | `claude-opus-5` / `medium` | Model and reasoning effort for triage suggestions |
 
 ---
 
@@ -399,6 +407,7 @@ POST   /api/assessments/{id}/scope         POST   /api/assessments/{id}/scope/ch
 POST   /api/assessments/{id}/targets       PUT    /api/assessments/{id}/team
 
 POST   /api/scans                          GET    /api/scans/{id}
+POST   /api/scans/import                   GET    /api/scans/import/tools
 POST   /api/scans/{id}/cancel              WS     /api/scans/{id}/progress
 GET    /api/scans/scanners                 GET    /api/scans/profiles
 
@@ -410,6 +419,9 @@ PATCH  /api/findings/{id}/remediation      POST   /api/findings/{id}/ready-for-r
 
 GET    /api/evidence/{id}/download         GET    /api/evidence/{id}/verify
 POST   /api/reports                        GET    /api/reports/{id}/download
+GET    /api/assessments/{id}/attack-paths  GET    /api/assessments/{id}/compliance
+GET    /api/assessments/{id}/posture       GET    /api/assessments/{id}/heatmap
+GET    /api/findings/{id}/ai-triage
 GET    /api/audit-logs                     GET    /api/system/health
 ```
 
@@ -423,7 +435,7 @@ cd backend
 ../.venv/bin/python -m pytest tests/ --cov=app --cov-report=term
 ```
 
-**155 tests, 69% coverage.** The suite runs against a throwaway SQLite database and
+**288 tests.** The suite runs against a throwaway SQLite database and
 needs no external services.
 
 | Area | Covers |
@@ -437,6 +449,11 @@ needs no external services.
 | `test_scanners.py` | Adapter contract, availability, profiles, graceful failure |
 | `test_assessments_audit.py` | CRUD, dashboard, audit immutability |
 | `test_reports.py` | PDF/CSV/JSON rendering, engine fallback, repeated-render stability |
+| `test_sarif_import.py` | SARIF parsing, severity/CWE/CVE mapping, scope enforcement on import |
+| `test_attack_paths.py` | Chain-rule matching precision, graph construction, target scoping |
+| `test_compliance.py` | Mapping-table integrity, readiness maths, framework rollup |
+| `test_posture.py` | Score factors and caps, grade consistency, asset heatmap |
+| `test_ai_triage.py` | Availability degradation, caching, and that suggestions never mutate state |
 
 ---
 
@@ -511,7 +528,8 @@ Documented rather than built, to keep the core workflow complete:
 GitHub Issues / Jira integration · Slack and email notifications · SSO and MFA ·
 scheduled and recurring assessments · customizable report templates · suppression rule
 engine · Burp and OpenVAS adapters · Shodan enrichment · multi-tenancy · Kubernetes
-deployment manifests.
+deployment manifests · learned (rather than hand-written) attack-path rules · compliance
+evidence export per control.
 
 ---
 

@@ -17,6 +17,7 @@ from app.models.enums import FindingStatus, Severity
 from app.models.user import User
 from app.schemas.common import MessageResponse, Page
 from app.schemas.findings import (
+    AITriageSuggestion,
     EvidenceRead,
     FindingAssignRequest,
     FindingCommentCreate,
@@ -38,6 +39,7 @@ from app.schemas.remediation import (
     RemediationUpdate,
     RetestCreate,
 )
+from app.services import ai_triage as ai_triage_service
 from app.services import audit, evidence as evidence_service, findings as service
 from app.services import remediation as remediation_service, workflow
 from app.services.audit import AuditAction
@@ -404,3 +406,26 @@ def perform_retest(
 def list_retests(finding_id: int, db: DbSession, user: CurrentUser) -> list[RetestRead]:
     finding = service.get_finding_for_user(db, user, finding_id)
     return [remediation_service.retest_read(r) for r in finding.retests]
+
+
+@router.get(
+    "/{finding_id}/ai-triage",
+    response_model=AITriageSuggestion,
+    dependencies=[Depends(require_permission(Permission.FINDING_VIEW))],
+    summary="AI-assisted triage suggestion for a finding",
+)
+def ai_triage(
+    finding_id: int,
+    db: DbSession,
+    user: CurrentUser,
+    refresh: Annotated[bool, Query(description="Ignore the cached suggestion")] = False,
+) -> AITriageSuggestion:
+    """Ask a model how likely this finding is a false positive, and how to fix it.
+
+    The result is advisory. This endpoint does not modify the finding's
+    verification status, severity, risk or workflow state — the analyst still
+    confirms or rejects it through the normal verify action. Requires an
+    ANTHROPIC_API_KEY; without one it returns 503 and nothing else changes.
+    """
+    finding = service.get_finding_for_user(db, user, finding_id)
+    return AITriageSuggestion(**ai_triage_service.suggest(db, finding, refresh=refresh))

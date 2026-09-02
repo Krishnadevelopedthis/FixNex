@@ -16,6 +16,7 @@ import { EmptyState, ErrorState, Progress, Separator, Skeleton } from "@/compone
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { errorMessage, useToast } from "@/components/ui/toast"
 import { AssignDialog, RetestDialog, ScoreDialog, TriageDialog, VerifyDialog } from "@/components/finding-dialogs"
+import { AITriagePanel } from "@/components/ai-triage-panel"
 import { EvidencePanel } from "@/components/evidence-panel"
 import { RemediationPanel } from "@/components/remediation-panel"
 import { FindingTimeline } from "@/components/finding-timeline"
@@ -248,6 +249,8 @@ export default function FindingDetailPage() {
                       {f.description || "No description was provided."}
                     </p>
                   </div>
+
+                  {can("finding:verify") && <AITriagePanel finding={f} />}
 
                   <Separator />
 

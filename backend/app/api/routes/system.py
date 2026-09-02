@@ -9,6 +9,7 @@ from app.db.session import check_database
 from app.scanners.registry import scanner_registry
 from app.schemas.common import MessageResponse
 from app.schemas.system import ComponentHealth, SLASettings, SystemHealthResponse
+from app.services import ai_triage as ai_triage_service
 from app.services import audit, sla as sla_service
 from app.services.audit import AuditAction
 from app.storage import get_storage
@@ -69,6 +70,16 @@ def system_health(db: DbSession, user: CurrentUser) -> SystemHealthResponse:
         ComponentHealth(
             name="redis", label="Redis", kind="cache",
             available=redis_ok, detail=redis_detail, required=False,
+        )
+    )
+
+    # AI triage is optional in exactly the same way a scanner binary is.
+    ai_ok, ai_detail = ai_triage_service.availability()
+    components.append(
+        ComponentHealth(
+            name="ai_triage", label="AI Triage Assistant", kind="enrichment",
+            available=ai_ok, detail=ai_detail, required=False,
+            version=settings.AI_TRIAGE_MODEL if ai_ok else None,
         )
     )
 
