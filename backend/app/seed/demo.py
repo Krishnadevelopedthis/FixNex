@@ -54,12 +54,12 @@ logger = logging.getLogger("prcampus.seed")
 DEMO_PASSWORD = "DemoPass123!"
 
 DEMO_USERS = [
-    ("admin@prcampus.io", "Aarav Sharma", Role.ADMIN, "Platform Administrator"),
-    ("lead@prcampus.io", "Priya Nair", Role.SECURITY_LEAD, "Security Lead"),
-    ("engineer@prcampus.io", "Rohan Mehta", Role.SECURITY_ENGINEER, "Security Engineer"),
-    ("analyst@prcampus.io", "Sara Iyer", Role.ANALYST, "Security Analyst"),
-    ("developer@prcampus.io", "Vikram Rao", Role.DEVELOPER, "Application Developer"),
-    ("auditor@prcampus.io", "Meera Joshi", Role.VIEWER, "Compliance Auditor"),
+    ("admin@fixnex.io", "Aarav Sharma", Role.ADMIN, "Platform Administrator"),
+    ("lead@fixnex.io", "Priya Nair", Role.SECURITY_LEAD, "Security Lead"),
+    ("engineer@fixnex.io", "Rohan Mehta", Role.SECURITY_ENGINEER, "Security Engineer"),
+    ("analyst@fixnex.io", "Sara Iyer", Role.ANALYST, "Security Analyst"),
+    ("developer@fixnex.io", "Vikram Rao", Role.DEVELOPER, "Application Developer"),
+    ("auditor@fixnex.io", "Meera Joshi", Role.VIEWER, "Compliance Auditor"),
 ]
 
 # A deliberately non-routable domain: the demo dataset never points at a real

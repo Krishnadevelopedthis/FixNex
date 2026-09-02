@@ -17,12 +17,12 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 const DEMO_ACCOUNTS = [
-  { role: "Security Lead", email: "lead@prcampus.io", note: "Creates assessments, scope, assigns work" },
-  { role: "Security Engineer", email: "engineer@prcampus.io", note: "Runs scans, verifies, retests" },
-  { role: "Developer", email: "developer@prcampus.io", note: "Works assigned remediation only" },
-  { role: "Administrator", email: "admin@prcampus.io", note: "Full access incl. users and settings" },
-  { role: "Analyst", email: "analyst@prcampus.io", note: "Manual testing and evidence" },
-  { role: "Auditor", email: "auditor@prcampus.io", note: "Read-only across the platform" },
+  { role: "Security Lead", email: "lead@fixnex.io", note: "Creates assessments, scope, assigns work" },
+  { role: "Security Engineer", email: "engineer@fixnex.io", note: "Runs scans, verifies, retests" },
+  { role: "Developer", email: "developer@fixnex.io", note: "Works assigned remediation only" },
+  { role: "Administrator", email: "admin@fixnex.io", note: "Full access incl. users and settings" },
+  { role: "Analyst", email: "analyst@fixnex.io", note: "Manual testing and evidence" },
+  { role: "Auditor", email: "auditor@fixnex.io", note: "Read-only across the platform" },
 ]
 const DEMO_PASSWORD = "DemoPass123!"
 

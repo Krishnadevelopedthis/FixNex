@@ -267,12 +267,12 @@ All demo accounts use the password **`DemoPass123!`**
 
 | Role | Email | What they can do |
 |---|---|---|
-| Administrator | `admin@prcampus.io` | Everything, including users and settings |
-| Security Lead | `lead@prcampus.io` | Assessments, scope, team, triage, assignment, reports |
-| Security Engineer | `engineer@prcampus.io` | Run scans, verify findings, rescore, retest |
-| Analyst | `analyst@prcampus.io` | Manual testing, raise findings, upload evidence |
-| Developer | `developer@prcampus.io` | Only findings assigned to them; update remediation |
-| Auditor | `auditor@prcampus.io` | Read-only across the platform |
+| Administrator | `admin@fixnex.io` | Everything, including users and settings |
+| Security Lead | `lead@fixnex.io` | Assessments, scope, team, triage, assignment, reports |
+| Security Engineer | `engineer@fixnex.io` | Run scans, verify findings, rescore, retest |
+| Analyst | `analyst@fixnex.io` | Manual testing, raise findings, upload evidence |
+| Developer | `developer@fixnex.io` | Only findings assigned to them; update remediation |
+| Auditor | `auditor@fixnex.io` | Read-only across the platform |
 
 > Demo data is labelled **DEMO DATA** everywhere it appears — in the UI, the API
 > (`data_origin: SEEDED_DEMO`) and generated reports. It is never presented as the
@@ -280,7 +280,7 @@ All demo accounts use the password **`DemoPass123!`**
 
 > [!WARNING]
 > **These accounts are for demonstration, not deployment.** The password above is
-> published in this README and printed on the sign-in page, and `admin@prcampus.io`
+> published in this README and printed on the sign-in page, and `admin@fixnex.io`
 > holds the `ADMIN` role — full access including users and settings. On any
 > internet-reachable instance that is a working administrator credential for anyone
 > who finds the URL. There is no public registration, so sign-in is the only way in,
@@ -301,7 +301,7 @@ All demo accounts use the password **`DemoPass123!`**
 
 A five-to-ten minute run through the whole lifecycle.
 
-1. **Sign in** as `lead@prcampus.io` → the dashboard shows severity, contextual risk,
+1. **Sign in** as `lead@fixnex.io` → the dashboard shows severity, contextual risk,
    the impact/likelihood heat map and remediation progress.
 2. **Assessments → College Portal Security Assessment → Scope.** Note the wildcard
    inclusion and the explicit `payments.` **exclusion**. Use the scope checker: an
@@ -319,12 +319,12 @@ A five-to-ten minute run through the whole lifecycle.
    justification is mandatory, and the finding is retained rather than deleted.
 8. **Upload evidence** — the SHA-256 hash is recorded; use *Verify integrity* to prove
    the stored bytes are unchanged; annotate a screenshot.
-9. **Triage → Assign** to `developer@prcampus.io`, which opens remediation and starts
+9. **Triage → Assign** to `developer@fixnex.io`, which opens remediation and starts
    the SLA clock.
-10. **Sign in as `developer@prcampus.io`** — the sidebar shrinks to five items and only
+10. **Sign in as `developer@fixnex.io`** — the sidebar shrinks to five items and only
     their assigned findings are visible. Update progress, then **Mark ready for retest**.
     Note they *cannot* set the status to Resolved, or change CVSS.
-11. **Sign in as `engineer@prcampus.io`** → **Retest → Pass** → the finding is **CLOSED**.
+11. **Sign in as `engineer@fixnex.io`** → **Retest → Pass** → the finding is **CLOSED**.
     A failing retest would instead reopen remediation.
 12. **Activity tab** — the complete timeline from discovery to closure.
 13. **Audit Logs** — every action, immutable.

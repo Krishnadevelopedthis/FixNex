@@ -5,7 +5,7 @@ A 5–10 minute walkthrough covering the complete lifecycle. All accounts use th
 
 ---
 
-### 1 · Dashboard  (`lead@prcampus.io`) — 45s
+### 1 · Dashboard  (`lead@fixnex.io`) — 45s
 
 Sign in as the Security Lead.
 
@@ -78,7 +78,7 @@ Click **Verify integrity** → proves the stored bytes are unchanged. Annotate a
 
 ### 9 · The developer's view — 60s
 
-Sign in as `developer@prcampus.io`.
+Sign in as `developer@fixnex.io`.
 
 > "Same platform, completely different surface."
 
@@ -90,7 +90,7 @@ Sign in as `developer@prcampus.io`.
 
 ### 10 · Retest and closure — 45s
 
-Sign in as `engineer@prcampus.io` → open the finding → **Retest → Pass**.
+Sign in as `engineer@fixnex.io` → open the finding → **Retest → Pass**.
 
 > "Closed. A failing retest would have reopened remediation instead — and either way the
 > history is preserved."
