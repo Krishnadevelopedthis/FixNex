@@ -97,7 +97,8 @@ scanner names its fallback rather than presenting as a failure.</td>
 <td width="50%"><img src="docs/screenshots/dashboard-dark.png" alt="Dark theme"></td>
 </tr>
 <tr>
-<td><b>Sign in.</b> Six demo roles, each seeing a different slice of the platform.</td>
+<td><b>Sign in.</b> Six demo roles, each seeing a different slice of the platform. Click a
+role to fill the form.</td>
 <td><b>Dark theme.</b> The same hue family taken to a deep slate-teal, so both themes read
 as one product.</td>
 </tr>
@@ -188,7 +189,8 @@ Jinja2 + WeasyPrint (fpdf2 fallback), pandas + openpyxl.
 
 **Frontend** — React 19, Vite, TypeScript, Tailwind CSS, shadcn/ui-style components on
 Radix primitives, React Router, TanStack Query, Axios, React Hook Form + Zod, Recharts,
-Lucide icons.
+Motion (animation), Lucide icons. Type is IBM Plex Sans and IBM Plex Mono throughout,
+with Space Grotesk reserved for the sign-in headline and wordmark.
 
 ---
 
@@ -275,6 +277,23 @@ All demo accounts use the password **`DemoPass123!`**
 > Demo data is labelled **DEMO DATA** everywhere it appears — in the UI, the API
 > (`data_origin: SEEDED_DEMO`) and generated reports. It is never presented as the
 > output of a scan that actually ran.
+
+> [!WARNING]
+> **These accounts are for demonstration, not deployment.** The password above is
+> published in this README and printed on the sign-in page, and `admin@prcampus.io`
+> holds the `ADMIN` role — full access including users and settings. On any
+> internet-reachable instance that is a working administrator credential for anyone
+> who finds the URL. There is no public registration, so sign-in is the only way in,
+> which is exactly why this matters.
+>
+> Before exposing an instance beyond a demo:
+>
+> 1. Create your own administrator **first** — user creation requires `USER_CREATE`,
+>    so removing the demo admin before you have another one locks you out.
+> 2. Set `SEED_ON_STARTUP=false`. Deleting the demo users alone is not enough: an empty
+>    database re-seeds the whole set, published password included.
+> 3. Remove or downgrade the demo `ADMIN` account, and rotate `DEMO_PASSWORD` in
+>    `backend/app/seed/demo.py` if you keep the rest for a public showcase.
 
 ---
 
@@ -432,6 +451,8 @@ Copy `.env.example` to `.env`. Never commit `.env`.
 | `SLA_HOURS_CRITICAL` … `_LOW` | `24` / `72` / `168` / `336` | Also editable in-app |
 | `ANTHROPIC_API_KEY` | — | Optional; enables AI triage suggestions. Without it the feature reports itself unavailable and nothing else changes |
 | `AI_TRIAGE_MODEL` / `AI_TRIAGE_EFFORT` | `claude-opus-5` / `medium` | Model and reasoning effort for triage suggestions |
+| `RUN_MIGRATIONS_ON_STARTUP` | `false` | Applies Alembic migrations as the app boots — useful where a release step is unavailable |
+| `SEED_ON_STARTUP` | `false` | Seeds the labelled demo dataset when the database holds no assessments. Leave `false` on anything internet-reachable — see [Demo credentials](#demo-credentials) |
 
 ---
 
@@ -504,7 +525,7 @@ needs no external services.
 ## Project structure
 
 ```
-pr-campus/
+FixNex/
 ├── backend/
 │   ├── app/
 │   │   ├── api/routes/      # thin HTTP layer
@@ -562,6 +583,17 @@ same endpoint produce one finding with two sources and raised confidence.
 
 **Audit immutability is structural.** There is no update or delete path for audit records
 anywhere in the service layer, no route exposes one, and no role holds such a permission.
+
+**Motion is one vocabulary, not per-component taste.** Every duration, easing curve and
+variant lives in `frontend/src/lib/motion.ts`, so the feel of the product is tuned in one
+file. No transition runs longer than ~400ms and `prefers-reduced-motion` is honoured
+through a shared hook and matching CSS guards. The one looping animation is a slow
+ambient pulse on CRITICAL severity — deliberately well past the interaction budget, since
+a fast loop reads as an alarm — and it is opt-in per call site, so a dense findings table
+stays still. Two deliberate exceptions: the attack-path graph uses CSS keyframes because
+ReactFlow mounts custom nodes outside the path Motion hooks into (its timings still come
+from `motion.ts`), and list entrances are latched to first paint so a background refetch
+never replays the cascade under someone who is reading the table.
 
 ---
 
