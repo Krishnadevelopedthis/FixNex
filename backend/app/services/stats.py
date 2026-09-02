@@ -25,10 +25,12 @@ from app.models.target import Target
 from app.schemas.common import CountByKey
 from app.schemas.dashboard import (
     ActivityItem,
+    AssetHeatmap,
     AssessmentCounters,
     DashboardResponse,
     FindingCounters,
     RecentScan,
+    PostureScore,
     RemediationCounters,
     RiskHeatCell,
     RiskyAsset,
@@ -322,4 +324,220 @@ def build_dashboard(db: Session, demo_mode: bool = False) -> DashboardResponse:
         trend=trend,
         risk_heatmap=risk_heatmap,
         scanner_availability=scanner_registry.availability_report(),
+        posture=PostureScore(**posture_score(db)),
+        asset_heatmap=AssetHeatmap(**asset_severity_heatmap(db)),
     )
+
+
+# ---------------------------------------------------------------------------
+# Asset x severity heatmap
+# ---------------------------------------------------------------------------
+def asset_severity_heatmap(
+    db: Session, assessment_id: int | None = None, limit: int = 12
+) -> dict:
+    """Open finding counts per asset per severity.
+
+    Assets are the row axis because that is how remediation is actually
+    resourced — a team owns a system, not a severity band. Targets with no
+    linked asset are grouped under the target itself rather than dropped.
+    """
+    query = (
+        db.query(
+            Target.id.label("target_id"),
+            Target.name.label("target_name"),
+            Asset.id.label("asset_id"),
+            Asset.name.label("asset_name"),
+            Asset.criticality.label("criticality"),
+            Finding.severity.label("severity"),
+            func.count(Finding.id).label("count"),
+        )
+        .join(Finding, Finding.target_id == Target.id)
+        .outerjoin(Asset, Target.asset_id == Asset.id)
+        .filter(Finding.status.in_(OPEN_STATUSES))
+        .filter(Finding.verification_status != VerificationStatus.FALSE_POSITIVE)
+        .filter(Finding.is_suppressed.is_(False))
+    )
+    if assessment_id is not None:
+        query = query.filter(Finding.assessment_id == assessment_id)
+
+    rows = query.group_by(
+        Target.id, Target.name, Asset.id, Asset.name, Asset.criticality, Finding.severity
+    ).all()
+
+    # Rows are keyed by asset where one is linked, so several targets belonging
+    # to the same system merge into one row rather than appearing as duplicates
+    # under the same name. Targets with no asset stand on their own.
+    grouped: dict[tuple[str, int], dict] = {}
+    for row in rows:
+        key = ("asset", row.asset_id) if row.asset_id else ("target", row.target_id)
+        entry = grouped.setdefault(
+            key,
+            {
+                "key": f"{key[0]}-{key[1]}",
+                "target_id": None if row.asset_id else row.target_id,
+                "asset_id": row.asset_id,
+                "name": row.asset_name or row.target_name,
+                "criticality": row.criticality,
+                "targets": 0,
+                # String keys so the payload serialises as plain JSON.
+                "counts": {str(severity): 0 for severity in SEVERITIES},
+                "total": 0,
+            },
+        )
+        entry["counts"][str(row.severity)] += row.count
+        entry["total"] += row.count
+    # Count how many distinct targets contribute to each row.
+    seen: dict[tuple[str, int], set] = {}
+    for row in rows:
+        key = ("asset", row.asset_id) if row.asset_id else ("target", row.target_id)
+        seen.setdefault(key, set()).add(row.target_id)
+    for key, targets in seen.items():
+        grouped[key]["targets"] = len(targets)
+
+    def weight(entry: dict) -> tuple:
+        counts = entry["counts"]
+        return (
+            counts[str(Severity.CRITICAL)],
+            counts[str(Severity.HIGH)],
+            counts[str(Severity.MEDIUM)],
+            entry["total"],
+        )
+
+    assets = sorted(grouped.values(), key=weight, reverse=True)[:limit]
+    return {
+        "severities": [str(s) for s in SEVERITIES],
+        "assets": assets,
+        "max_count": max((max(a["counts"].values()) for a in assets), default=0),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Security posture score
+# ---------------------------------------------------------------------------
+# Each factor deducts from a perfect 100. The weights are the maximum each
+# factor can remove, so the worst possible posture floors at 0 rather than
+# going negative, and no single factor can sink the score on its own.
+POSTURE_WEIGHTS: dict[str, float] = {
+    "open_critical": 30.0,
+    "open_high": 20.0,
+    "sla_breaches": 20.0,
+    "unverified_backlog": 15.0,
+    "ageing_findings": 15.0,
+}
+
+# Counts at which a factor reaches its full deduction.
+_SATURATION = {
+    "open_critical": 5,
+    "open_high": 10,
+    "sla_breaches": 5,
+    "unverified_backlog": 20,
+    "ageing_findings": 10,
+}
+AGEING_DAYS = 30
+
+
+def posture_score(db: Session, assessment_id: int | None = None) -> dict:
+    """A single 0-100 posture score, always returned with its workings.
+
+    Every deduction is reported alongside the number so the score can be
+    argued with. An unexplained score is worse than no score: nobody can act
+    on "you are a 62".
+    """
+    now = utcnow()
+
+    def base_query():
+        query = db.query(Finding).filter(
+            Finding.verification_status != VerificationStatus.FALSE_POSITIVE,
+            Finding.is_suppressed.is_(False),
+        )
+        if assessment_id is not None:
+            query = query.filter(Finding.assessment_id == assessment_id)
+        return query
+
+    open_query = base_query().filter(Finding.status.in_(OPEN_STATUSES))
+
+    open_critical = open_query.filter(Finding.severity == Severity.CRITICAL).count()
+    open_high = open_query.filter(Finding.severity == Severity.HIGH).count()
+    sla_breaches = open_query.filter(
+        Finding.sla_due_at.isnot(None), Finding.sla_due_at < now
+    ).count()
+    unverified = base_query().filter(
+        Finding.status.in_([FindingStatus.DISCOVERED, FindingStatus.NEEDS_VERIFICATION])
+    ).count()
+    ageing = open_query.filter(Finding.first_seen_at < now - timedelta(days=AGEING_DAYS)).count()
+
+    total_open = open_query.count()
+    total_findings = base_query().count()
+    closed = base_query().filter(Finding.status == FindingStatus.CLOSED).count()
+
+    measured = {
+        "open_critical": open_critical,
+        "open_high": open_high,
+        "sla_breaches": sla_breaches,
+        "unverified_backlog": unverified,
+        "ageing_findings": ageing,
+    }
+
+    labels = {
+        "open_critical": "Open critical findings",
+        "open_high": "Open high findings",
+        "sla_breaches": "Findings past their SLA",
+        "unverified_backlog": "Findings awaiting verification",
+        "ageing_findings": f"Findings open longer than {AGEING_DAYS} days",
+    }
+    explanations = {
+        "open_critical": "Unresolved critical issues are the single strongest signal of exposure.",
+        "open_high": "High-severity issues compound; a backlog of them is a standing risk.",
+        "sla_breaches": "Missing agreed remediation deadlines indicates the process is not keeping up.",
+        "unverified_backlog": "Findings nobody has triaged are unknown risk, not absent risk.",
+        "ageing_findings": "Issues that stay open for a month rarely get easier to fix.",
+    }
+
+    factors = []
+    deducted = 0.0
+    for key, weight in POSTURE_WEIGHTS.items():
+        count = measured[key]
+        saturation = _SATURATION[key]
+        # Linear up to saturation, then capped at the factor's full weight.
+        penalty = round(weight * min(count / saturation, 1.0), 1) if saturation else 0.0
+        deducted += penalty
+        factors.append({
+            "key": key,
+            "label": labels[key],
+            "count": count,
+            "penalty": penalty,
+            "max_penalty": weight,
+            "explanation": explanations[key],
+        })
+
+    score = round(max(0.0, 100.0 - deducted), 1)
+    if score >= 85:
+        grade, summary = "A", "Strong posture with no material outstanding exposure."
+    elif score >= 70:
+        grade, summary = "B", "Reasonable posture; a small number of issues need attention."
+    elif score >= 55:
+        grade, summary = "C", "Mixed posture; several findings are overdue or unverified."
+    elif score >= 35:
+        grade, summary = "D", "Weak posture; critical or overdue findings are accumulating."
+    else:
+        grade, summary = "F", "Poor posture; urgent remediation is required."
+
+    factors.sort(key=lambda f: -f["penalty"])
+    return {
+        "score": score,
+        "grade": grade,
+        "summary": summary,
+        "factors": factors,
+        "totals": {
+            "findings": total_findings,
+            "open": total_open,
+            "closed": closed,
+            "resolution_rate": round(100.0 * closed / total_findings, 1) if total_findings else 0.0,
+        },
+        "methodology": (
+            "The score starts at 100 and subtracts a weighted penalty for each factor below. "
+            "Each factor has a maximum deduction and saturates at the count shown, so no "
+            "single factor can sink the score on its own. It is a PR-CAMPUS platform "
+            "measure, not an industry standard."
+        ),
+    }

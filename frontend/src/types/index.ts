@@ -448,6 +448,43 @@ export interface Dashboard {
   trend: { date: string; discovered: number; closed: number }[]
   risk_heatmap: { impact: string; likelihood: string; count: number }[]
   scanner_availability: Record<string, unknown>[]
+  posture?: PostureScore | null
+  asset_heatmap?: AssetHeatmap | null
+}
+
+export interface PostureFactor {
+  key: string
+  label: string
+  count: number
+  penalty: number
+  max_penalty: number
+  explanation: string
+}
+
+export interface PostureScore {
+  score: number
+  grade: string
+  summary: string
+  factors: PostureFactor[]
+  totals: { findings: number; open: number; closed: number; resolution_rate: number }
+  methodology: string
+}
+
+export interface HeatmapAsset {
+  key: string
+  name: string
+  asset_id?: number | null
+  target_id?: number | null
+  criticality?: string | null
+  targets: number
+  counts: Record<string, number>
+  total: number
+}
+
+export interface AssetHeatmap {
+  severities: string[]
+  assets: HeatmapAsset[]
+  max_count: number
 }
 
 export interface ComponentHealth {

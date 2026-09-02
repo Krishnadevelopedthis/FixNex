@@ -15,6 +15,7 @@ from app.core.permissions import Permission
 from app.models.assessment import Assessment
 from app.models.enums import AssessmentStatus
 from app.models.target import ScopeRule
+from app.schemas.dashboard import AssetHeatmap, PostureScore
 from app.schemas.assessments import (
     AttackPathResponse,
     ComplianceResponse,
@@ -31,6 +32,7 @@ from app.schemas.assessments import (
 from app.schemas.common import MessageResponse, Page
 from app.schemas.targets import TargetCreate, TargetRead
 from app.services import attack_paths as attack_path_service
+from app.services import stats as stats_service
 from app.services import compliance as compliance_service
 from app.services import assessments as service
 from app.services import scope as scope_service
@@ -276,3 +278,26 @@ def compliance(assessment_id: int, db: DbSession, user: CurrentUser) -> Complian
     """
     require_assessment_access(db, user, assessment_id)
     return ComplianceResponse(**compliance_service.build_compliance(db, assessment_id))
+
+
+@router.get(
+    "/{assessment_id}/posture",
+    response_model=PostureScore,
+    dependencies=[Depends(require_permission(Permission.DASHBOARD_VIEW))],
+    summary="Explainable security posture score for one assessment",
+)
+def assessment_posture(assessment_id: int, db: DbSession, user: CurrentUser) -> PostureScore:
+    """A 0-100 score returned with every deduction that produced it."""
+    require_assessment_access(db, user, assessment_id)
+    return PostureScore(**stats_service.posture_score(db, assessment_id))
+
+
+@router.get(
+    "/{assessment_id}/heatmap",
+    response_model=AssetHeatmap,
+    dependencies=[Depends(require_permission(Permission.DASHBOARD_VIEW))],
+    summary="Open findings per asset per severity",
+)
+def assessment_heatmap(assessment_id: int, db: DbSession, user: CurrentUser) -> AssetHeatmap:
+    require_assessment_access(db, user, assessment_id)
+    return AssetHeatmap(**stats_service.asset_severity_heatmap(db, assessment_id))

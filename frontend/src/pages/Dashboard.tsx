@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge, StatusBadge } from "@/components/ui/badge"
 import { EmptyState, ErrorState, Progress, Skeleton } from "@/components/ui/misc"
 import { CvssHistogram, RiskDonutChart, RiskHeatmap, SeverityBarChart, TrendChart } from "@/components/charts"
+import { AssetHeatmapCard, PostureCard } from "@/components/posture"
 import { cn, relativeTime, titleCase } from "@/lib/utils"
 import { SEVERITY_DOT } from "@/lib/severity"
 import { useAuth } from "@/hooks/useAuth"
@@ -108,6 +109,13 @@ export default function DashboardPage() {
           sub={`${remediation.due_soon} due soon`}
         />
       </div>
+
+      {(data.posture || data.asset_heatmap) && (
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          {data.posture && <PostureCard data={data.posture} />}
+          {data.asset_heatmap && <AssetHeatmapCard data={data.asset_heatmap} />}
+        </div>
+      )}
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         {/* Severity */}
