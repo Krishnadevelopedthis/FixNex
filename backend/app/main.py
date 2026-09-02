@@ -47,6 +47,15 @@ async def lifespan(app: FastAPI):
     available = [s.name for s in scanner_registry.all() if s.availability().available]
     logger.info("Scanners available: %s", ", ".join(available) or "none")
 
+    # A scan running in this process cannot survive a restart; without this the
+    # row stays RUNNING for ever and its progress socket never terminates.
+    if ok:
+        from app.services.scanning import reconcile_orphaned_jobs
+
+        orphaned = reconcile_orphaned_jobs()
+        if orphaned:
+            logger.warning("Marked %d interrupted scan(s) as failed on startup.", orphaned)
+
     if settings.SEED_ON_STARTUP:
         from app.seed.demo import seed_if_empty
 

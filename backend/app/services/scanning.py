@@ -531,3 +531,54 @@ def import_scan_results(
     db.commit()
     db.refresh(job)
     return job
+
+
+def reconcile_orphaned_jobs(db: Session | None = None) -> int:
+    """Fail scans that were executing in this process when it last stopped.
+
+    A scan running on the in-process thread runner cannot survive a restart:
+    the thread is gone, but the row still says RUNNING, so the job hangs at
+    whatever percentage it reached, the dashboard reports a scan that is not
+    happening, and the progress socket for it never terminates.
+
+    Only jobs recorded as `task_runner="thread"` are reconciled. A Celery job
+    may legitimately still be running in a separate worker that outlived the
+    API process, so those are left alone.
+
+    Accepts an optional session so callers (and tests) can supply their own;
+    otherwise it opens and commits one of its own.
+    """
+    if db is not None:
+        return _reconcile(db)
+    with session_scope() as owned:
+        return _reconcile(owned)
+
+
+def _reconcile(db: Session) -> int:
+    orphans = (
+        db.query(ScanJob)
+        .filter(
+            ScanJob.status.in_([ScanStatus.RUNNING, ScanStatus.QUEUED]),
+            ScanJob.task_runner == "thread",
+        )
+        .all()
+    )
+    for job in orphans:
+        job.status = ScanStatus.FAILED
+        job.completed_at = utcnow()
+        job.error_message = (
+            "The scan was interrupted because the server restarted while it was "
+            "running. Findings recorded before the interruption were kept; start a "
+            "new scan to finish the rest."
+        )
+        job.current_operation = "Interrupted by a server restart"
+        for run in job.scanner_runs:
+            if run.status in (ScannerRunStatus.RUNNING, ScannerRunStatus.PENDING):
+                run.status = ScannerRunStatus.FAILED
+                run.completed_at = utcnow()
+                run.error_message = "Interrupted by a server restart."
+
+    if orphans:
+        db.commit()
+        logger.warning("Reconciled %d scan job(s) orphaned by a restart.", len(orphans))
+    return len(orphans)

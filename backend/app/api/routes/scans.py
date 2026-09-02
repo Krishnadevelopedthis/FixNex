@@ -17,6 +17,7 @@ from fastapi import (
 )
 
 from app.api.deps import CurrentUser, DbSession, Pagination, require_assessment_access, require_permission
+from app.core.config import settings
 from app.core.exceptions import NotFoundError, ValidationError
 from app.core.permissions import Permission
 from app.db.session import SessionLocal
@@ -269,8 +270,12 @@ async def scan_progress(websocket: WebSocket, scan_id: int, token: str = Query(.
         return
 
     last_payload: dict | None = None
+    # A socket must not outlive the scan it is watching. Without a deadline a
+    # client watching a job that never terminates keeps the connection - and
+    # the server's graceful shutdown - open indefinitely.
+    deadline = asyncio.get_event_loop().time() + settings.SCANNER_TIMEOUT_SECONDS + 120
     try:
-        while True:
+        while asyncio.get_event_loop().time() < deadline:
             db = SessionLocal()
             try:
                 job = db.get(ScanJob, scan_id)
@@ -309,6 +314,11 @@ async def scan_progress(websocket: WebSocket, scan_id: int, token: str = Query(.
             if finished:
                 break
             await asyncio.sleep(1)
+        else:
+            # Fell out on the deadline rather than on completion.
+            await websocket.send_json(
+                {"error": "This progress stream timed out. Reload to resume watching."}
+            )
     except WebSocketDisconnect:
         return
     finally:
