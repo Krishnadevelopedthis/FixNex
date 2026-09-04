@@ -180,7 +180,7 @@ def parse_sarif_bytes(raw: bytes, tool_name: str, target_value: str = "") -> tup
             f"The SARIF file is larger than the {MAX_SARIF_BYTES // (1024 * 1024)} MB limit."
         )
     try:
-        document = json.loads(raw.decode("utf-8"))
+        document = json.loads(raw.decode("utf-8-sig"))
     except UnicodeDecodeError as exc:
         raise ValidationError("The SARIF file must be UTF-8 encoded.") from exc
     except json.JSONDecodeError as exc:

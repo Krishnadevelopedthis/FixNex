@@ -1,27 +1,45 @@
 #!/usr/bin/env bash
-# Waits for PostgreSQL, applies migrations, then starts the API.
 set -euo pipefail
 
-echo "Waiting for PostgreSQL…"
-until python -c "
-import sys, psycopg2
-from app.core.config import settings
-url = settings.DATABASE_URL.replace('postgresql+psycopg2', 'postgresql')
-try:
-    psycopg2.connect(url).close()
-except Exception as exc:
-    print(exc); sys.exit(1)
-" 2>/dev/null; do
-  sleep 2
-done
-echo "PostgreSQL is ready."
+echo "========================================"
+echo "Starting FixNex"
+echo "========================================"
 
-echo "Applying database migrations…"
-alembic upgrade head
+# ==================================================
+# FAST STARTUP
+# ==================================================
+
+echo "OWASP ZAP is disabled."
+echo "Starting FixNex API directly."
+
+# ==================================================
+# DATABASE
+# ==================================================
+#
+# Do not wait for PostgreSQL here.
+# FastAPI handles database connectivity.
+#
+# Run Alembic migrations separately during deployment.
+# ==================================================
+
+echo "Skipping startup database wait."
+echo "Skipping startup Alembic migration."
+
+# ==================================================
+# OPTIONAL DEMO SEED
+# ==================================================
 
 if [ "${SEED_DEMO_ON_START:-false}" = "true" ]; then
-  echo "Seeding the demonstration dataset…"
-  python -m app.cli seed-demo || echo "Seeding skipped."
+    echo "Demo seed requested."
+    echo "Skipping demo seed during fast startup."
 fi
+
+# ==================================================
+# START FIXNEX API
+# ==================================================
+
+echo "========================================"
+echo "Starting FixNex API immediately..."
+echo "========================================"
 
 exec "$@"
